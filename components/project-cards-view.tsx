@@ -8,9 +8,10 @@ import { Skeleton } from "@/components/ui/skeleton"
 type ProjectCardsViewProps = {
   projects: Project[]
   loading?: boolean
+  onCreateProject?: () => void
 }
 
-export function ProjectCardsView({ projects, loading = false }: ProjectCardsViewProps) {
+export function ProjectCardsView({ projects, loading = false, onCreateProject }: ProjectCardsViewProps) {
   const isEmpty = !loading && projects.length === 0
 
   return (
@@ -28,7 +29,10 @@ export function ProjectCardsView({ projects, loading = false }: ProjectCardsView
           </div>
           <h3 className="mb-2 text-lg font-semibold text-foreground">No projects yet</h3>
           <p className="mb-6 text-sm text-muted-foreground">Create your first project to get started</p>
-          <button className="rounded-lg border border-border bg-background px-4 py-2 text-sm hover:bg-accent transition-colors cursor-pointer">
+          <button
+            className="rounded-lg border border-border bg-background px-4 py-2 text-sm hover:bg-accent transition-colors cursor-pointer"
+            onClick={onCreateProject}
+          >
             <Plus className="mr-2 inline h-4 w-4" />
             Create new project
           </button>
@@ -38,7 +42,10 @@ export function ProjectCardsView({ projects, loading = false }: ProjectCardsView
           {projects.map((p) => (
             <ProjectCard key={p.id} project={p} />
           ))}
-          <button className="rounded-2xl border border-dashed border-border/60 bg-background p-6 text-center text-sm text-muted-foreground hover:border-solid hover:border-border/80 hover:text-foreground transition-colors min-h-[180px] flex flex-col items-center justify-center cursor-pointer">
+          <button
+            className="rounded-2xl border border-dashed border-border/60 bg-background p-6 text-center text-sm text-muted-foreground hover:border-solid hover:border-border/80 hover:text-foreground transition-colors min-h-[180px] flex flex-col items-center justify-center cursor-pointer"
+            onClick={onCreateProject}
+          >
             <Plus className="mb-2 h-5 w-5" />
             Create new project
           </button>

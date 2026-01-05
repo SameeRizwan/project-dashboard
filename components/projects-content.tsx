@@ -6,6 +6,7 @@ import { ProjectHeader } from "@/components/project-header"
 import { ProjectTimeline } from "@/components/project-timeline"
 import { ProjectCardsView } from "@/components/project-cards-view"
 import { ProjectBoardView } from "@/components/project-board-view"
+import { ProjectWizard } from "@/components/project-wizard/ProjectWizard"
 import { computeFilterCounts, projects } from "@/lib/data/projects"
 import { DEFAULT_VIEW_OPTIONS, type FilterChip, type ViewOptions } from "@/lib/view-options"
 import { chipsToParams, paramsToChips } from "@/lib/url/filters"
@@ -19,8 +20,22 @@ export function ProjectsContent() {
 
   const [filters, setFilters] = useState<FilterChip[]>([])
 
+  const [isWizardOpen, setIsWizardOpen] = useState(false)
+
   const isSyncingRef = useRef(false)
   const prevParamsRef = useRef<string>("")
+
+  const openWizard = () => {
+    setIsWizardOpen(true)
+  }
+
+  const closeWizard = () => {
+    setIsWizardOpen(false)
+  }
+
+  const handleProjectCreated = () => {
+    setIsWizardOpen(false)
+  }
 
   const removeFilter = (key: string, value: string) => {
     const next = filters.filter((f) => !(f.key === key && f.value === value))
@@ -107,10 +122,14 @@ export function ProjectsContent() {
         counts={computeFilterCounts(filteredProjects)}
         viewOptions={viewOptions}
         onViewOptionsChange={setViewOptions}
+        onAddProject={openWizard}
       />
       {viewOptions.viewType === "timeline" && <ProjectTimeline />}
-      {viewOptions.viewType === "list" && <ProjectCardsView projects={filteredProjects} />}
-      {viewOptions.viewType === "board" && <ProjectBoardView projects={filteredProjects} />}
+      {viewOptions.viewType === "list" && <ProjectCardsView projects={filteredProjects} onCreateProject={openWizard} />}
+      {viewOptions.viewType === "board" && <ProjectBoardView projects={filteredProjects} onAddProject={openWizard} />}
+      {isWizardOpen && (
+        <ProjectWizard onClose={closeWizard} onCreate={handleProjectCreated} />
+      )}
     </div>
   )
 }

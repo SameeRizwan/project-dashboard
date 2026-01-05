@@ -81,11 +81,11 @@ export function FilterPopover({ initialChips, onApply, onClear, counts }: Filter
   ] as const
 
   const statusOptions = [
-    { id: "backlog", label: "Backlog", color: "#f97316" },
-    { id: "planned", label: "Planned", color: "#6b7280" },
-    { id: "active", label: "Active", color: "#22c55e" },
-    { id: "cancelled", label: "Cancelled", color: "#9ca3af" },
-    { id: "completed", label: "Completed", color: "#3b82f6" },
+    { id: "backlog", label: "Backlog", color: "var(--chart-2)" },
+    { id: "planned", label: "Planned", color: "var(--chart-2)" },
+    { id: "active", label: "Active", color: "var(--chart-3)" },
+    { id: "cancelled", label: "Cancelled", color: "var(--chart-5)" },
+    { id: "completed", label: "Completed", color: "var(--chart-3)" },
   ]
 
   const priorityOptions = [

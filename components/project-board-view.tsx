@@ -26,6 +26,7 @@ function columnStatusIcon(status: Project["status"]): React.JSX.Element {
 type ProjectBoardViewProps = {
   projects: Project[]
   loading?: boolean
+  onAddProject?: () => void
 }
 
 const COLUMN_ORDER: Array<Project["status"]> = ["backlog", "planned", "active", "completed"]
@@ -47,7 +48,7 @@ function columnStatusLabel(status: Project["status"]): string {
   }
 }
 
-export function ProjectBoardView({ projects, loading = false }: ProjectBoardViewProps) {
+export function ProjectBoardView({ projects, loading = false, onAddProject }: ProjectBoardViewProps) {
   const [items, setItems] = useState<Project[]>(projects)
   const [draggingId, setDraggingId] = useState<string | null>(null)
 
@@ -171,10 +172,7 @@ export function ProjectBoardView({ projects, loading = false }: ProjectBoardView
                   size="icon"
                   className="h-7 w-7 rounded-lg"
                   type="button"
-                  // TODO: hook up to create-project flow for this column
-                  onClick={() => {
-                    /* placeholder for add-project in this column */
-                  }}
+                  onClick={onAddProject}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -194,6 +192,7 @@ export function ProjectBoardView({ projects, loading = false }: ProjectBoardView
                 variant="ghost"
                 size="sm"
                 type="button"
+                onClick={onAddProject}
               >
                 <Plus className="mr-1 h-4 w-4" />
                 Add project

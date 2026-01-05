@@ -17,9 +17,10 @@ interface ProjectHeaderProps {
   counts?: FilterCounts
   viewOptions: ViewOptions
   onViewOptionsChange: (options: ViewOptions) => void
+  onAddProject?: () => void
 }
 
-export function ProjectHeader({ filters, onRemoveFilter, onFiltersChange, counts, viewOptions, onViewOptionsChange }: ProjectHeaderProps) {
+export function ProjectHeader({ filters, onRemoveFilter, onFiltersChange, counts, viewOptions, onViewOptionsChange, onAddProject }: ProjectHeaderProps) {
   return (
     <header className="flex flex-col border-b border-border/40">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
@@ -31,7 +32,7 @@ export function ProjectHeader({ filters, onRemoveFilter, onFiltersChange, counts
           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg">
             <LinkIcon className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={onAddProject}>
             <Plus className="h-4 w-4" weight="bold" />
             Add Project
           </Button>
@@ -51,13 +52,8 @@ export function ProjectHeader({ filters, onRemoveFilter, onFiltersChange, counts
         <div className="flex items-center gap-2">
           <ViewOptionsPopover options={viewOptions} onChange={onViewOptionsChange} />
           <div className="relative">
-            <div
-              className="relative rounded-xl border border-blue-900 shadow-[inset_0_11px_19.3px_0_rgba(0,0,0,0.25)] overflow-hidden"
-              style={{
-                background: 'conic-gradient(from 0deg at 50% 50%, #FFFFFF 80%, #FFFFFF 0%)',
-              }}
-            >
-              <Button className="h-8 gap-2 rounded-xl bg-gradient-to-r from-blue-900 to-blue-700 text-white hover:from-blue-800 hover:to-blue-600 relative z-10">
+            <div className="relative rounded-xl border border-border bg-card/80 shadow-sm overflow-hidden">
+              <Button className="h-8 gap-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 relative z-10 px-3">
                 <Sparkle className="h-4 w-4" weight="fill" />
                 Ask AI
               </Button>

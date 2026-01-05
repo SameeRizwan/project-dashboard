@@ -39,10 +39,10 @@ function computeProjectProgress(project: Project) {
 
 function getProgressColor(percent: number): string {
   // Simple threshold-based mapping, aligned with the sidebar palette
-  if (percent >= 80) return "#22C55E" // xanh lá
-  if (percent >= 50) return "#F97316" // cam
-  if (percent > 0) return "#EF4444" // đỏ
-  return "#94A3B8" // xám nhạt cho 0%
+  if (percent >= 80) return "var(--chart-3)" // success
+  if (percent >= 50) return "var(--chart-4)" // mid / warning
+  if (percent > 0) return "var(--chart-5)" // low / risk
+  return "var(--chart-2)" // neutral for 0%
 }
 
 export function ProjectProgress({ project, className, size = 18, showTaskSummary = true }: ProjectProgressProps) {

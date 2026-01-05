@@ -30,10 +30,10 @@ export const navItems: NavItem[] = [
 ]
 
 export const activeProjects: ActiveProjectSummary[] = [
-    { id: "ai-learning", name: "AI Learning Platform", color: "#EF4444", progress: 25 },
-    { id: "fintech-app", name: "Fintech Mobile App", color: "#F97316", progress: 80 },
-    { id: "ecommerce-admin", name: "E-commerce Admin", color: "#22C55E", progress: 65 },
-    { id: "healthcare-app", name: "Healthcare Booking App", color: "#94A3B8", progress: 10 },
+    { id: "ai-learning", name: "AI Learning Platform", color: "var(--chart-5)", progress: 25 },
+    { id: "fintech-app", name: "Fintech Mobile App", color: "var(--chart-3)", progress: 80 },
+    { id: "ecommerce-admin", name: "E-commerce Admin", color: "var(--chart-3)", progress: 65 },
+    { id: "healthcare-app", name: "Healthcare Booking App", color: "var(--chart-2)", progress: 10 },
 ]
 
 export const footerItems: SidebarFooterItem[] = [
