@@ -6,7 +6,9 @@ import { ProjectCard } from "@/components/project-card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
-import { DotsThreeVertical, Plus, StackSimple, Spinner, CircleNotch, CheckCircle } from "@phosphor-icons/react/dist/ssr"
+import { DotsThreeVertical, Plus, StackSimple, Spinner, CircleNotch, CheckCircle, Trash } from "@phosphor-icons/react/dist/ssr"
+import { projectService } from "@/lib/services/project-service"
+import { toast } from "sonner"
 
 function columnStatusIcon(status: Project["status"]): React.JSX.Element {
   switch (status) {
@@ -27,6 +29,7 @@ type ProjectBoardViewProps = {
   projects: Project[]
   loading?: boolean
   onAddProject?: () => void
+  onRefresh?: () => void
 }
 
 const COLUMN_ORDER: Array<Project["status"]> = ["backlog", "planned", "active", "completed"]
@@ -48,7 +51,7 @@ function columnStatusLabel(status: Project["status"]): string {
   }
 }
 
-export function ProjectBoardView({ projects, loading = false, onAddProject }: ProjectBoardViewProps) {
+export function ProjectBoardView({ projects, loading = false, onAddProject, onRefresh }: ProjectBoardViewProps) {
   const [items, setItems] = useState<Project[]>(projects)
   const [draggingId, setDraggingId] = useState<string | null>(null)
 
@@ -59,7 +62,13 @@ export function ProjectBoardView({ projects, loading = false, onAddProject }: Pr
   const groups = useMemo(() => {
     const m = new Map<Project["status"], Project[]>()
     for (const s of COLUMN_ORDER) m.set(s, [])
-    for (const p of items) m.get(p.status)!.push(p)
+    for (const p of items) {
+      const arr = m.get(p.status)
+      if (arr) {
+        arr.push(p)
+      }
+      // Skip projects with status not in COLUMN_ORDER (e.g., "cancelled")
+    }
     return m
   }, [items])
 
@@ -79,11 +88,10 @@ export function ProjectBoardView({ projects, loading = false, onAddProject }: Pr
     <div
       key={p.id}
       draggable
-      className={`transition-all ${
-        draggingId === p.id
-          ? "cursor-grabbing opacity-70 shadow-lg shadow-lg/20 scale-[0.98]"
-          : "cursor-grab"
-      }`}
+      className={`transition-all ${draggingId === p.id
+        ? "cursor-grabbing opacity-70 shadow-lg shadow-lg/20 scale-[0.98]"
+        : "cursor-grab"
+        }`}
       onDragStart={(e) => {
         e.dataTransfer.setData("text/id", p.id)
         setDraggingId(p.id)
@@ -111,6 +119,24 @@ export function ProjectBoardView({ projects, loading = false, onAddProject }: Pr
                     Move to {s}
                   </button>
                 ))}
+                <div className="border-t border-border my-1" />
+                <button
+                  className="w-full rounded-md px-2 py-1 text-left text-sm hover:bg-destructive/10 text-destructive flex items-center gap-2"
+                  onClick={async () => {
+                    if (!confirm("Are you sure you want to delete this project?")) return
+                    try {
+                      await projectService.deleteProject(p.id)
+                      setItems((prev) => prev.filter((x) => x.id !== p.id))
+                      toast.success("Project deleted")
+                      onRefresh?.()
+                    } catch (error) {
+                      toast.error("Failed to delete project")
+                    }
+                  }}
+                >
+                  <Trash className="h-4 w-4" />
+                  Delete
+                </button>
               </div>
             </PopoverContent>
           </Popover>

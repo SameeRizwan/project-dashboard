@@ -118,5 +118,16 @@ export const projectService = {
             console.error("Error seeding projects:", error);
             throw error;
         }
+    },
+
+    // Delete a project
+    async deleteProject(id: string): Promise<void> {
+        try {
+            const docRef = doc(db, COLLECTION_NAME, id);
+            await deleteDoc(docRef);
+        } catch (error) {
+            console.error("Error deleting project:", error);
+            throw error;
+        }
     }
 };
