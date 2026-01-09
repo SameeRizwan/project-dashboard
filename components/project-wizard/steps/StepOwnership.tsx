@@ -9,6 +9,7 @@ import { Input } from "../../ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
 import { Separator } from "../../ui/separator";
 import { getAvatarUrl } from "@/lib/assets/avatars";
+import { useAuth } from "@/components/auth-provider";
 
 interface StepOwnershipProps {
   data: ProjectData;
@@ -21,6 +22,7 @@ interface Account {
   email: string;
   team?: string;
   initials: string;
+  photoURL?: string;
 }
 
 const DEFAULT_OWNER_ID = "jason-d";
@@ -85,38 +87,58 @@ function getInitials(name: string) {
 }
 
 export function StepOwnership({ data, updateData }: StepOwnershipProps) {
+  const { user } = useAuth();
   const [accounts, setAccounts] = useState<Account[]>(DEFAULT_ACCOUNTS);
   const [query, setQuery] = useState("");
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
 
-  const ownerId = data.ownerId ?? DEFAULT_OWNER_ID;
+  // Create current user account from Firebase auth
+  const currentUserAccount: Account | null = useMemo(() => {
+    if (!user) return null;
+    const name = user.displayName || user.email?.split("@")[0] || "You";
+    return {
+      id: user.uid,
+      name,
+      email: user.email || "",
+      team: "Owner",
+      initials: getInitials(name),
+      photoURL: user.photoURL || undefined,
+    };
+  }, [user]);
 
-  useEffect(() => {
-    if (!data.ownerId) {
-      updateData({ ownerId: DEFAULT_OWNER_ID });
-    }
-  }, [data.ownerId, updateData]);
+  const ownerId = data.ownerId ?? currentUserAccount?.id ?? DEFAULT_OWNER_ID;
 
+  // Set the logged-in user as owner on mount
   useEffect(() => {
-    if (!data.contributorOwnerships || data.contributorOwnerships.length === 0) {
-      updateData({
-        contributorOwnerships: [{ accountId: "harrold", access: "can_edit" }],
-        contributorIds: ["harrold"],
+    if (currentUserAccount && !data.ownerId) {
+      updateData({ ownerId: currentUserAccount.id });
+      // Add current user to accounts if not already there
+      setAccounts((prev) => {
+        if (prev.some((a) => a.id === currentUserAccount.id)) return prev;
+        return [currentUserAccount, ...prev];
       });
     }
-  }, [data.contributorOwnerships, updateData]);
+  }, [currentUserAccount, data.ownerId, updateData]);
 
+  // Don't auto-add default contributors/stakeholders - start fresh
   useEffect(() => {
-    if (!data.stakeholderOwnerships || data.stakeholderOwnerships.length === 0) {
+    if (!data.contributorOwnerships) {
       updateData({
-        stakeholderOwnerships: [
-          { accountId: "james", access: "can_view" },
-          { accountId: "mitch", access: "can_view" },
-        ],
-        stakeholderIds: ["james", "mitch"],
+        contributorOwnerships: [],
+        contributorIds: [],
       });
     }
-  }, [data.stakeholderOwnerships, updateData]);
+  }, []);
+
+  useEffect(() => {
+    if (!data.stakeholderOwnerships) {
+      updateData({
+        stakeholderOwnerships: [],
+        stakeholderIds: [],
+      });
+    }
+  }, []);
+
 
   const contributorOwnerships: OwnershipEntry[] =
     data.contributorOwnerships ?? data.contributorIds.map<OwnershipEntry>((id) => ({
@@ -130,10 +152,13 @@ export function StepOwnership({ data, updateData }: StepOwnershipProps) {
       access: "can_view",
     }));
 
-  const ownerAccount = useMemo(
-    () => accounts.find((a) => a.id === ownerId) ?? accounts[0],
-    [accounts, ownerId]
-  );
+  // Get owner account - prefer current user, then lookup, then fallback
+  const ownerAccount = useMemo(() => {
+    if (currentUserAccount && ownerId === currentUserAccount.id) {
+      return currentUserAccount;
+    }
+    return accounts.find((a) => a.id === ownerId) ?? currentUserAccount ?? accounts[0];
+  }, [accounts, ownerId, currentUserAccount]);
 
   const getAccountById = (accountId: string): Account | undefined =>
     accounts.find((a) => a.id === accountId);
@@ -281,7 +306,7 @@ export function StepOwnership({ data, updateData }: StepOwnershipProps) {
             <div className="flex items-center gap-3">
               <Avatar className="h-5 w-5">
                 {ownerAccount && (
-                  <AvatarImage src={getAvatarUrl(ownerAccount.name)} />
+                  <AvatarImage src={ownerAccount.photoURL || getAvatarUrl(ownerAccount.name)} />
                 )}
                 <AvatarFallback>
                   {ownerAccount ? ownerAccount.initials : "PO"}
@@ -305,9 +330,9 @@ export function StepOwnership({ data, updateData }: StepOwnershipProps) {
             </div>
           </div>
         </div>
-<Separator />
+        <Separator />
 
-        
+
         {/* Contributors - Multi-select mockup */}
         <div className="space-y-3 px-3">
           <div className="flex items-center justify-between">
@@ -392,7 +417,7 @@ export function StepOwnership({ data, updateData }: StepOwnershipProps) {
             )}
           </div>
         </div>
-<Separator />
+        <Separator />
         {/* Stakeholders list */}
         <div className="space-y-3 px-3">
           <div className="flex items-center justify-between">
