@@ -5,6 +5,7 @@ import { Button } from "../../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import { getAvatarUrl } from "@/lib/assets/avatars";
 import { Rocket, Flask, Briefcase, User, Users, Layout, Target, CheckCircle, Question, PencilSimpleLine } from "@phosphor-icons/react/dist/ssr";
+import { useAuth } from "@/components/auth-provider";
 
 interface StepReviewProps {
   data: ProjectData;
@@ -12,70 +13,78 @@ interface StepReviewProps {
 }
 
 export function StepReview({ data, onEditStep }: StepReviewProps) {
-    const getIntentIcon = () => {
-        switch (data.intent) {
-            case 'delivery': return <Rocket className="h-5 w-5" />;
-            case 'experiment': return <Flask className="h-5 w-5" />;
-            case 'internal': return <Briefcase className="h-5 w-5" />;
-            default: return null;
-        }
-    };
+  const { user } = useAuth();
+  const getIntentIcon = () => {
+    switch (data.intent) {
+      case 'delivery': return <Rocket className="h-5 w-5" />;
+      case 'experiment': return <Flask className="h-5 w-5" />;
+      case 'internal': return <Briefcase className="h-5 w-5" />;
+      default: return null;
+    }
+  };
 
-    const deliverableSummary = (data.deliverables ?? []).length
-        ? (data.deliverables ?? [])
-            .map((d) => d.title || "Untitled deliverable")
-            .join(", ")
-        : "Not specified";
+  const deliverableSummary = (data.deliverables ?? []).length
+    ? (data.deliverables ?? [])
+      .map((d) => d.title || "Untitled deliverable")
+      .join(", ")
+    : "Not specified";
 
-    const metricSummary = (data.metrics ?? []).length
-        ? (data.metrics ?? [])
-            .map((m) => `${m.name || 'Metric'}: ${m.target || 'Target'}`)
-            .join(", ")
-        : (data.metricName || data.metricTarget)
-            ? `${data.metricName || 'Metric'}: ${data.metricTarget || 'Target'}`
-            : "Not specified";
+  const metricSummary = (data.metrics ?? []).length
+    ? (data.metrics ?? [])
+      .map((m) => `${m.name || 'Metric'}: ${m.target || 'Target'}`)
+      .join(", ")
+    : (data.metricName || data.metricTarget)
+      ? `${data.metricName || 'Metric'}: ${data.metricTarget || 'Target'}`
+      : "Not specified";
 
-    const getSuccessIcon = () => {
-        switch (data.successType) {
-            case 'deliverable': return <CheckCircle className="h-5 w-5" />;
-            case 'metric': return <Target className="h-5 w-5" />;
-            default: return <Question className="h-5 w-5" />;
-        }
-    };
+  const getSuccessIcon = () => {
+    switch (data.successType) {
+      case 'deliverable': return <CheckCircle className="h-5 w-5" />;
+      case 'metric': return <Target className="h-5 w-5" />;
+      default: return <Question className="h-5 w-5" />;
+    }
+  };
 
-    const ownerNameMap: Record<string, string> = {
-        "jason-d": "Jason D",
-        "alex-morgan": "Alex Morgan",
-        "sarah-chen": "Sarah Chen",
-        "mike-ross": "Mike Ross",
-        "harrold": "Harrold",
-        "james": "James Boarnd",
-        "mitch": "Mitch Sato",
-    };
+  const ownerNameMap: Record<string, string> = {
+    "jason-d": "Jason D",
+    "alex-morgan": "Alex Morgan",
+    "sarah-chen": "Sarah Chen",
+    "mike-ross": "Mike Ross",
+    "harrold": "Harrold",
+    "james": "James Boarnd",
+    "mitch": "Mitch Sato",
+  };
 
-    const getInitials = (name: string | undefined) => {
-        if (!name) return "";
-        const parts = name.trim().split(" ");
-        if (parts.length === 1) return parts[0]?.[0]?.toUpperCase() ?? "";
-        const first = parts[0]?.[0];
-        const last = parts[parts.length - 1]?.[0];
-        return `${first ?? ""}${last ?? ""}`.toUpperCase();
-    };
+  const getInitials = (name: string | undefined) => {
+    if (!name) return "";
+    const parts = name.trim().split(" ");
+    if (parts.length === 1) return parts[0]?.[0]?.toUpperCase() ?? "";
+    const first = parts[0]?.[0];
+    const last = parts[parts.length - 1]?.[0];
+    return `${first ?? ""}${last ?? ""}`.toUpperCase();
+  };
 
-    const ownerId = data.ownerId;
-    const ownerName = ownerId ? ownerNameMap[ownerId] ?? "Selected owner" : "Not assigned";
-    const ownerAvatarUrl = ownerName ? getAvatarUrl(ownerName) : undefined;
-    const ownerInitials = getInitials(ownerName);
+  const ownerId = data.ownerId;
 
-    const structureLabel =
-        data.structure === 'milestones'
-            ? 'Milestones'
-            : data.structure === 'multistream'
-                ? 'Multi-stream'
-                : 'Linear';
+  // Check if owner is the current logged-in user
+  const isCurrentUser = ownerId && user && ownerId === user.uid;
+  const ownerName = isCurrentUser
+    ? (user.displayName || user.email?.split("@")[0] || "You")
+    : (ownerId ? ownerNameMap[ownerId] ?? "Unknown" : "Not assigned");
+  const ownerAvatarUrl = isCurrentUser && user.photoURL
+    ? user.photoURL
+    : (ownerName ? getAvatarUrl(ownerName) : undefined);
+  const ownerInitials = getInitials(ownerName);
 
-    const deliverableCount = (data.deliverables ?? []).length;
-    const metricCount = (data.metrics ?? []).length;
+  const structureLabel =
+    data.structure === 'milestones'
+      ? 'Milestones'
+      : data.structure === 'multistream'
+        ? 'Multi-stream'
+        : 'Linear';
+
+  const deliverableCount = (data.deliverables ?? []).length;
+  const metricCount = (data.metrics ?? []).length;
 
   return (
     <div className="flex flex-col space-y-4 bg-muted p-4 rounded-2xl">
@@ -120,8 +129,13 @@ export function StepReview({ data, onEditStep }: StepReviewProps) {
               <p className="text-sm font-semibold">
                 {data.successType === 'deliverable' && 'Deliverable-based'}
                 {data.successType === 'metric' && 'Metric-based'}
-                {data.successType === 'undefined' && 'To be defined'}
+                {data.successType === 'undefined' && (data.description ? 'Custom description' : 'To be defined')}
               </p>
+              {data.successType === 'undefined' && data.description && (
+                <div className="mt-1 text-xs text-muted-foreground truncate max-w-[300px]">
+                  {data.description}
+                </div>
+              )}
               {data.successType === 'deliverable' && deliverableCount > 0 && (
                 <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                   <Target className="h-3 w-3" />
