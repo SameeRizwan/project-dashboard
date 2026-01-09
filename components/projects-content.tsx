@@ -143,11 +143,6 @@ export function ProjectsContent() {
         onViewOptionsChange={setViewOptions}
         onAddProject={openWizard}
       />
-      {projects.length === 0 && (
-        <div className="flex justify-center p-4">
-          <button onClick={handleSeed} className="text-sm text-blue-500 underline">Seed Data (Dev Only)</button>
-        </div>
-      )}
       {viewOptions.viewType === "timeline" && <ProjectTimeline projects={filteredProjects} />}
       {viewOptions.viewType === "list" && <ProjectCardsView projects={filteredProjects} onCreateProject={openWizard} onRefresh={fetchProjects} />}
       {viewOptions.viewType === "board" && <ProjectBoardView projects={filteredProjects} onAddProject={openWizard} onRefresh={fetchProjects} />}
