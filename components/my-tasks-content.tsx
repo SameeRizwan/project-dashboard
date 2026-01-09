@@ -7,7 +7,9 @@ import { TaskCardsView } from "@/components/task-cards-view"
 import { TaskBoardView } from "@/components/task-board-view"
 import { projectService } from "@/lib/services/project-service"
 import { DEFAULT_VIEW_OPTIONS, type ViewOptions } from "@/lib/view-options"
-import { Spinner } from "@phosphor-icons/react/dist/ssr"
+import { Spinner, Plus } from "@phosphor-icons/react/dist/ssr"
+import { Button } from "@/components/ui/button"
+import { CreateTaskDialog } from "@/components/create-task-dialog"
 
 type Task = {
     id: string
@@ -25,27 +27,29 @@ export function MyTasksContent() {
     const [tasks, setTasks] = useState<Task[]>([])
     const [loading, setLoading] = useState(true)
     const [viewOptions, setViewOptions] = useState<ViewOptions>(DEFAULT_VIEW_OPTIONS)
+    const [createOpen, setCreateOpen] = useState(false)
+
+    const fetchTasks = async () => {
+        setLoading(true)
+        try {
+            const projects = await projectService.getAllProjects()
+            const allTasks: Task[] = projects.flatMap((project) =>
+                project.tasks.map((task) => ({
+                    ...task,
+                    projectId: project.id,
+                    projectName: project.name,
+                    priority: project.priority,
+                }))
+            )
+            setTasks(allTasks)
+        } catch (error) {
+            console.error("Error fetching tasks:", error)
+        } finally {
+            setLoading(false)
+        }
+    }
 
     useEffect(() => {
-        const fetchTasks = async () => {
-            setLoading(true)
-            try {
-                const projects = await projectService.getAllProjects()
-                const allTasks: Task[] = projects.flatMap((project) =>
-                    project.tasks.map((task) => ({
-                        ...task,
-                        projectId: project.id,
-                        projectName: project.name,
-                        priority: project.priority,
-                    }))
-                )
-                setTasks(allTasks)
-            } catch (error) {
-                console.error("Error fetching tasks:", error)
-            } finally {
-                setLoading(false)
-            }
-        }
         fetchTasks()
     }, [])
 
@@ -74,35 +78,51 @@ export function MyTasksContent() {
                         <p className="text-base font-medium text-foreground">My Tasks</p>
                     </div>
                 </div>
-                <div className="flex items-center justify-between px-4 pb-3 pt-3">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground hidden sm:flex">
                         <span>{stats.total} total</span>
                         <span className="text-blue-500">{stats.todo} to do</span>
                         <span className="text-amber-500">{stats.inProgress} in progress</span>
                         <span className="text-green-500">{stats.done} done</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 ml-auto">
+                        <Button size="sm" className="gap-2" onClick={() => setCreateOpen(true)}>
+                            <Plus className="h-4 w-4" />
+                            Create Task
+                        </Button>
                         <ViewOptionsPopover options={viewOptions} onChange={setViewOptions} />
                     </div>
                 </div>
             </header>
 
             {/* Content based on view type from ViewOptionsPopover */}
-            {viewOptions.viewType === "list" && (
-                <TaskCardsView tasks={tasks} loading={loading} />
-            )}
+            {
+                viewOptions.viewType === "list" && (
+                    <TaskCardsView tasks={tasks} loading={loading} />
+                )
+            }
 
-            {viewOptions.viewType === "board" && (
-                <TaskBoardView tasks={tasks} loading={loading} />
-            )}
+            {
+                viewOptions.viewType === "board" && (
+                    <TaskBoardView tasks={tasks} loading={loading} />
+                )
+            }
 
-            {viewOptions.viewType === "timeline" && (
-                <div className="flex-1 p-6">
-                    <div className="text-center py-12 text-muted-foreground">
-                        <p>Timeline view for tasks coming soon</p>
+            {
+                viewOptions.viewType === "timeline" && (
+                    <div className="flex-1 p-6">
+                        <div className="text-center py-12 text-muted-foreground">
+                            <p>Timeline view for tasks coming soon</p>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+
+            <CreateTaskDialog
+                open={createOpen}
+                onOpenChange={setCreateOpen}
+                onTaskCreated={fetchTasks}
+            />
+        </div >
     )
 }

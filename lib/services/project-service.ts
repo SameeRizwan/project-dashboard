@@ -9,7 +9,8 @@ import {
     query,
     orderBy,
     Timestamp,
-    writeBatch
+    writeBatch,
+    arrayUnion
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { projects as mockProjects, type Project } from "@/lib/data/projects";
@@ -188,6 +189,26 @@ export const projectService = {
         } catch (error) {
             console.error("Error fetching project:", error);
             return null;
+        }
+    },
+
+    // Add a task to a project
+    async addTask(projectId: string, task: Omit<Project['tasks'][0], 'id'>): Promise<void> {
+        try {
+            const docRef = doc(db, COLLECTION_NAME, projectId);
+            const newTask = {
+                ...task,
+                id: crypto.randomUUID(),
+                startDate: Timestamp.fromDate(task.startDate),
+                endDate: Timestamp.fromDate(task.endDate)
+            };
+
+            await updateDoc(docRef, {
+                tasks: arrayUnion(newTask)
+            });
+        } catch (error) {
+            console.error("Error adding task:", error);
+            throw error;
         }
     }
 };
