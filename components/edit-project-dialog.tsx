@@ -13,6 +13,12 @@ import { projectService } from "@/lib/services/project-service"
 import { toast } from "sonner"
 import { format } from "date-fns"
 
+// Strip HTML tags from text
+function stripHtml(html: string | undefined): string {
+    if (!html) return ""
+    return html.replace(/<[^>]*>/g, "").trim()
+}
+
 interface EditProjectDialogProps {
     project: Project | null
     open: boolean
@@ -30,7 +36,7 @@ export function EditProjectDialog({ project, open, onOpenChange, onSave }: EditP
 
     useEffect(() => {
         if (project) {
-            setName(project.name)
+            setName(stripHtml(project.name))
             setStatus(project.status)
             setPriority(project.priority)
             setClient(project.client || "")

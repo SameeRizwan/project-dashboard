@@ -9,6 +9,12 @@ import { cn } from "@/lib/utils"
 import { PriorityBadge } from "@/components/priority-badge"
 import { ProjectProgress } from "@/components/project-progress"
 
+// Strip HTML tags from text
+function stripHtml(html: string | undefined): string {
+  if (!html) return ""
+  return html.replace(/<[^>]*>/g, "").trim()
+}
+
 type ProjectCardProps = {
   project: Project
   actions?: React.ReactNode
@@ -95,7 +101,7 @@ export function ProjectCard({ project, actions, variant = "list" }: ProjectCardP
 
         <div className="mt-3">
           <p className="text-[15px] font-semibold text-foreground leading-6">
-            {project.name}
+            {stripHtml(project.name)}
           </p>
           {isBoard ? (
             <div className="mt-1 text-sm text-muted-foreground truncate">

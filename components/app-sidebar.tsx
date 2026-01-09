@@ -31,6 +31,8 @@ import {
   CaretRight,
   CaretUpDown,
   SignOut,
+  CalendarBlank,
+  Timer,
 } from "@phosphor-icons/react/dist/ssr"
 import { activeProjects, footerItems, navItems, type NavItemId, type SidebarFooterItemId } from "@/lib/data/sidebar"
 import { useAuth } from "@/components/auth-provider"
@@ -40,6 +42,8 @@ const navItemIcons: Record<NavItemId, React.ComponentType<{ className?: string }
   "my-tasks": CheckSquare,
   projects: Folder,
   clients: Users,
+  calendar: CalendarBlank,
+  "time-tracking": Timer,
   performance: ChartBar,
 }
 
