@@ -239,25 +239,53 @@ export function ReportsContent() {
         return data.sort((a, b) => b.utilization - a.utilization)
     }, [timeEntries])
 
-    // Revenue forecast
+    // Revenue forecast based on Project Priority and Status
     const forecastData = useMemo(() => {
+        // Heuristic values for monthly project revenue based on priority
+        const REVENUE_BY_PRIORITY: Record<string, number> = {
+            urgent: 25000,
+            high: 15000,
+            medium: 8000,
+            low: 3000
+        }
+
+        // Calculate confirmed revenue (Active projects)
+        const currentConfirmed = projects
+            .filter(p => p.status === 'active')
+            .reduce((sum, p) => sum + (REVENUE_BY_PRIORITY[p.priority] || 5000), 0)
+
+        // Calculate pipeline revenue (Planned/Backlog projects)
+        const currentPipeline = projects
+            .filter(p => p.status === 'planned' || p.status === 'backlog')
+            .reduce((sum, p) => sum + (REVENUE_BY_PRIORITY[p.priority] || 5000), 0)
+
         const months = Array.from({ length: 6 }, (_, i) => {
             const date = addMonths(new Date(), i)
             return format(date, "MMM yyyy")
         })
 
         return months.map((month, i) => {
-            const base = 45000 + Math.floor(Math.random() * 15000)
-            const projected = base * (1 + i * 0.05) // 5% growth per month
-            const pipeline = projected * (0.3 + Math.random() * 0.4) // 30-70% pipeline
+            // Simulate growth/churn
+            // Confirmed revenue might dip slightly over time as projects close
+            const confirmedMultipler = Math.max(0, 1 - (i * 0.1));
+            const confirmed = Math.round(currentConfirmed * confirmedMultipler);
+
+            // Pipeline revenue ramps up as new projects start
+            // Probability of closing: 30% start, increasing over time
+            const pipelineMultiplier = Math.min(1, 0.2 + (i * 0.15));
+            const pipeline = Math.round(currentPipeline * pipelineMultiplier);
+
+            // Projected total + small organic growth factor
+            const projected = confirmed + pipeline + (i * 2000);
+
             return {
                 month,
-                projected: Math.round(projected),
-                pipeline: Math.round(pipeline),
-                confirmed: Math.round(projected * 0.6),
+                projected,
+                pipeline,
+                confirmed,
             }
         })
-    }, [])
+    }, [projects])
 
     // Summary stats
     const stats = useMemo(() => {
