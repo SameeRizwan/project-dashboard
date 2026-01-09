@@ -91,11 +91,7 @@ export function ClientsContent() {
         fetchClients()
     }, [])
 
-    const handleSeed = async () => {
-        await clientService.seedClients()
-        fetchClients()
-        toast.success("Sample clients added!")
-    }
+
 
     const openCreateDialog = () => {
         setEditingClient(null)
@@ -228,9 +224,6 @@ export function ClientsContent() {
                     <div className="flex gap-2">
                         <Button onClick={openCreateDialog} variant="default">
                             Add Client
-                        </Button>
-                        <Button onClick={handleSeed} variant="outline">
-                            Seed Sample Data
                         </Button>
                     </div>
                 </div>

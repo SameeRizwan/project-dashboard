@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import React from "react"
 import { usePathname } from "next/navigation"
 import {
   Sidebar,
@@ -58,6 +59,20 @@ const footerItemIcons: Record<SidebarFooterItemId, React.ComponentType<{ classNa
 export function AppSidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
+  const [taskCount, setTaskCount] = React.useState(0)
+
+  React.useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const projects = await import("@/lib/services/project-service").then(m => m.projectService.getAllProjects())
+        const count = projects.reduce((acc, p) => acc + p.tasks.length, 0)
+        setTaskCount(count)
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    fetchCount()
+  }, [])
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/"
@@ -114,11 +129,15 @@ export function AppSidebar() {
                         <span>{item.label}</span>
                       </SidebarMenuButton>
                     </Link>
-                    {item.badge && (
+                    {(item.id === "my-tasks" && taskCount > 0) ? (
+                      <SidebarMenuBadge className="bg-primary/10 text-primary rounded-full px-2">
+                        {taskCount}
+                      </SidebarMenuBadge>
+                    ) : item.badge ? (
                       <SidebarMenuBadge className="bg-muted text-muted-foreground rounded-full px-2">
                         {item.badge}
                       </SidebarMenuBadge>
-                    )}
+                    ) : null}
                   </SidebarMenuItem>
                 )
               })}

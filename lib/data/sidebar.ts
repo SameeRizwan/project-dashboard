@@ -23,7 +23,7 @@ export type SidebarFooterItem = {
 }
 
 export const navItems: NavItem[] = [
-    { id: "inbox", label: "Inbox", href: "/inbox", badge: 24 },
+    { id: "inbox", label: "Inbox", href: "/inbox" },
     { id: "my-tasks", label: "My Tasks", href: "/my-tasks" },
     { id: "projects", label: "Projects", href: "/" },
     { id: "clients", label: "Clients", href: "/clients" },

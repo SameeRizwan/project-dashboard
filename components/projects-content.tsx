@@ -51,11 +51,6 @@ export function ProjectsContent() {
     setIsWizardOpen(false)
   }
 
-  const handleSeed = async () => {
-    await projectService.seedProjects()
-    fetchProjects()
-  }
-
   const removeFilter = (key: string, value: string) => {
     const next = filters.filter((f) => !(f.key === key && f.value === value))
     setFilters(next)
