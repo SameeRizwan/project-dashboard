@@ -129,5 +129,61 @@ export const projectService = {
             console.error("Error deleting project:", error);
             throw error;
         }
+    },
+
+    // Update an existing project
+    async updateProject(id: string, updates: Partial<Project>): Promise<void> {
+        try {
+            const docRef = doc(db, COLLECTION_NAME, id);
+
+            // Convert dates to Timestamps if present
+            const firestoreUpdates: Record<string, any> = { ...updates };
+
+            if (updates.startDate) {
+                firestoreUpdates.startDate = Timestamp.fromDate(updates.startDate);
+            }
+            if (updates.endDate) {
+                firestoreUpdates.endDate = Timestamp.fromDate(updates.endDate);
+            }
+            if (updates.tasks) {
+                firestoreUpdates.tasks = updates.tasks.map(t => ({
+                    ...t,
+                    startDate: Timestamp.fromDate(t.startDate),
+                    endDate: Timestamp.fromDate(t.endDate)
+                }));
+            }
+
+            await updateDoc(docRef, firestoreUpdates);
+        } catch (error) {
+            console.error("Error updating project:", error);
+            throw error;
+        }
+    },
+
+    // Get a single project by ID
+    async getProject(id: string): Promise<Project | null> {
+        try {
+            const docRef = doc(db, COLLECTION_NAME, id);
+            const docSnap = await getDocs(query(collection(db, COLLECTION_NAME)));
+            const projectDoc = docSnap.docs.find(d => d.id === id);
+
+            if (!projectDoc) return null;
+
+            const data = projectDoc.data() as ProjectFirestore;
+            return {
+                ...data,
+                id: projectDoc.id,
+                startDate: data.startDate.toDate(),
+                endDate: data.endDate.toDate(),
+                tasks: data.tasks.map((task: any) => ({
+                    ...task,
+                    startDate: task.startDate?.toDate ? task.startDate.toDate() : new Date(task.startDate),
+                    endDate: task.endDate?.toDate ? task.endDate.toDate() : new Date(task.endDate),
+                }))
+            } as Project;
+        } catch (error) {
+            console.error("Error fetching project:", error);
+            return null;
+        }
     }
 };
