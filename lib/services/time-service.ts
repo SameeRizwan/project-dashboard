@@ -55,6 +55,53 @@ export const timeService = {
             });
         } catch (error) {
             console.error("Error fetching time entries:", error);
+            return [];
+        }
+    },
+
+    async getAllTimeEntries(): Promise<TimeEntry[]> {
+        try {
+            const q = query(
+                collection(db, COLLECTION_NAME),
+                orderBy("date", "desc")
+            );
+
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.docs.map(doc => {
+                const data = doc.data() as TimeEntryFirestore;
+                return {
+                    ...data,
+                    id: doc.id,
+                    date: data.date.toDate(),
+                    createdAt: data.createdAt.toDate(),
+                };
+            });
+        } catch (error) {
+            console.error("Error fetching all time entries:", error);
+            return [];
+        }
+    },
+
+    async getProjectTimeEntries(projectId: string): Promise<TimeEntry[]> {
+        try {
+            const q = query(
+                collection(db, COLLECTION_NAME),
+                where("projectId", "==", projectId),
+                orderBy("date", "desc")
+            );
+
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.docs.map(doc => {
+                const data = doc.data() as TimeEntryFirestore;
+                return {
+                    ...data,
+                    id: doc.id,
+                    date: data.date.toDate(),
+                    createdAt: data.createdAt.toDate(),
+                };
+            });
+        } catch (error) {
+            console.error("Error fetching project time entries:", error);
             // Fallback for indexes building or other errors
             return [];
         }

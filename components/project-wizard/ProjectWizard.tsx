@@ -119,7 +119,7 @@ export function ProjectWizard({ onClose, onCreate }: ProjectWizardProps) {
         }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
-          "flex w-full max-w-[900px] overflow-hidden rounded-[24px] bg-background shadow-2xl"
+          "flex w-full max-w-[900px] max-h-[90vh] overflow-hidden rounded-[24px] bg-background shadow-2xl"
         )}
       >
         {step === 0 ? (
