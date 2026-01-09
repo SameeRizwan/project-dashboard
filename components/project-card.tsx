@@ -8,6 +8,7 @@ import { Folder, CalendarBlank, Flag, User } from "@phosphor-icons/react/dist/ss
 import { cn } from "@/lib/utils"
 import { PriorityBadge } from "@/components/priority-badge"
 import { ProjectProgress } from "@/components/project-progress"
+import { useAuth } from "@/components/auth-provider"
 
 // Strip HTML tags from text
 function stripHtml(html: string | undefined): string {
@@ -43,11 +44,27 @@ function priorityLabel(priority: Project["priority"]) {
   return priority.charAt(0).toUpperCase() + priority.slice(1)
 }
 
+import { useState } from "react"
+import { ProjectDetailsSheet } from "@/components/project-details-sheet"
+
+// ... imports remain same ...
+
 export function ProjectCard({ project, actions, variant = "list" }: ProjectCardProps) {
+  const [showDetails, setShowDetails] = useState(false)
+
+  const { user } = useAuth()
   const s = statusConfig(project.status)
   const assignee = project.members?.[0]
   const dueDate = project.endDate
-  const avatarUrl = getAvatarUrl(assignee)
+
+  // Try to get avatar:
+  // 1. From getAvatarUrl (hardcoded/known users)
+  // 2. If valid user session and assignee name matches, use user.photoURL
+  let avatarUrl = getAvatarUrl(assignee)
+  if (!avatarUrl && user && assignee && (assignee.toLowerCase() === user.displayName?.toLowerCase() || assignee === "You")) {
+    avatarUrl = user.photoURL || undefined
+  }
+
   const isBoard = variant === "board"
 
   const initials = assignee ? assignee.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase() : null
@@ -64,7 +81,6 @@ export function ProjectCard({ project, actions, variant = "list" }: ProjectCardP
     }
     return ""
   })()
-
   const dueLabel = (() => {
     if (!dueDate) return "No due date"
     // Board view: dùng format ngắn gọn cho header
@@ -72,86 +88,107 @@ export function ProjectCard({ project, actions, variant = "list" }: ProjectCardP
   })()
 
   return (
-    <div className="rounded-2xl border border-border bg-background hover:shadow-lg/5 transition-shadow cursor-pointer">
-      <div className="p-4">
-        <div className="flex items-center justify-between">
-          {isBoard ? (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Flag className="h-4 w-4" />
-              <span>{dueLabel}</span>
-            </div>
-          ) : (
-            <div className="text-muted-foreground">
-              <Folder className="h-5 w-5" />
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            {!isBoard && (
-              <div className={cn("flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium", s.pill)}>
-                <span className={cn("inline-block size-1.5 rounded-full", s.dot)} />
-                {s.label}
+    <>
+      <div
+        className="rounded-2xl border border-border bg-background hover:shadow-lg/5 transition-shadow cursor-pointer"
+        onClick={() => setShowDetails(true)}
+      >
+        <div className="p-4">
+          <div className="flex items-center justify-between">
+            {isBoard ? (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Flag className="h-4 w-4" />
+                <span>{dueLabel}</span>
+              </div>
+            ) : (
+              <div className="text-muted-foreground">
+                <Folder className="h-5 w-5" />
               </div>
             )}
-            {isBoard && (
-              <PriorityBadge level={project.priority} appearance="inline" />
-            )}
-            {actions ? <div className="shrink-0">{actions}</div> : null}
-          </div>
-        </div>
-
-        <div className="mt-3">
-          <p className="text-[15px] font-semibold text-foreground leading-6">
-            {stripHtml(project.name)}
-          </p>
-          {isBoard ? (
-            <div className="mt-1 text-sm text-muted-foreground truncate">
-              {secondaryLine}
-            </div>
-          ) : (
-            (() => {
-              const a = project.client
-              const b = project.typeLabel
-              const c = project.durationLabel
-              if (a || b || c) {
-                return (
-                  <p className="mt-1 text-sm text-muted-foreground truncate">
-                    {[a, b, c].filter(Boolean).join(" • ")}
-                  </p>
-                )
-              }
-              if (project.tags && project.tags.length > 0) {
-                return (
-                  <p className="mt-1 text-sm text-muted-foreground truncate">{project.tags.join(" • ")}</p>
-                )
-              }
-              return null
-            })()
-          )}
-        </div>
-
-
-        {!isBoard && (
-          <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <CalendarBlank className="h-4 w-4" />
-              <span>{dueDate ? format(dueDate, "MMM d, yyyy") : "—"}</span>
+              {!isBoard && (
+                <div className={cn("flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium", s.pill)}>
+                  <span className={cn("inline-block size-1.5 rounded-full", s.dot)} />
+                  {s.label}
+                </div>
+              )}
+              {isBoard && (
+                <PriorityBadge level={project.priority} appearance="inline" />
+              )}
+              {actions ? (
+                <div
+                  className="shrink-0"
+                  onClick={(e) => e.stopPropagation()} // Prevent opening sheet when clicking actions
+                >
+                  {actions}
+                </div>
+              ) : null}
             </div>
-            <PriorityBadge level={project.priority} appearance="inline" />
           </div>
-        )}
 
-        <div className="mt-4 border-t border-border/60" />
+          <div className="mt-3">
+            {/* ... existing content ... */}
+            <p className="text-[15px] font-semibold text-foreground leading-6">
+              {stripHtml(project.name)}
+            </p>
+            {/* ... existing content ... */}
+            {isBoard ? (
+              <div className="mt-1 text-sm text-muted-foreground truncate">
+                {secondaryLine}
+              </div>
+            ) : (
+              // ... existing logic ...
+              (() => {
+                const a = project.client
+                const b = project.typeLabel
+                const c = project.durationLabel
+                if (a || b || c) {
+                  return (
+                    <p className="mt-1 text-sm text-muted-foreground truncate">
+                      {[a, b, c].filter(Boolean).join(" • ")}
+                    </p>
+                  )
+                }
+                if (project.tags && project.tags.length > 0) {
+                  return (
+                    <p className="mt-1 text-sm text-muted-foreground truncate">{project.tags.join(" • ")}</p>
+                  )
+                }
+                return null
+              })()
+            )}
+          </div>
 
-        <div className="mt-3 flex items-center justify-between">
-          <ProjectProgress project={project} size={isBoard ? 20 : 18} />
-          <Avatar className="size-6 border border-border">
-            <AvatarImage alt={assignee ?? ""} src={avatarUrl} />
-            <AvatarFallback className="text-xs">
-              {initials ? initials : <User className="h-4 w-4 text-muted-foreground" />}
-            </AvatarFallback>
-          </Avatar>
+
+          {!isBoard && (
+            <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <CalendarBlank className="h-4 w-4" />
+                <span>{dueDate ? format(dueDate, "MMM d, yyyy") : "—"}</span>
+              </div>
+              <PriorityBadge level={project.priority} appearance="inline" />
+            </div>
+          )}
+
+          <div className="mt-4 border-t border-border/60" />
+
+          <div className="mt-3 flex items-center justify-between">
+            <ProjectProgress project={project} size={isBoard ? 20 : 18} />
+            <Avatar className="size-6 border border-border">
+              <AvatarImage alt={assignee ?? ""} src={avatarUrl} />
+              <AvatarFallback className="text-xs">
+                {initials ? initials : <User className="h-4 w-4 text-muted-foreground" />}
+              </AvatarFallback>
+            </Avatar>
+          </div>
         </div>
       </div>
-    </div>
+
+      <ProjectDetailsSheet
+        project={project}
+        open={showDetails}
+        onOpenChange={setShowDetails}
+      />
+    </>
   )
 }

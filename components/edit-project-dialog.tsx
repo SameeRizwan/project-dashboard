@@ -28,6 +28,7 @@ interface EditProjectDialogProps {
 
 export function EditProjectDialog({ project, open, onOpenChange, onSave }: EditProjectDialogProps) {
     const [name, setName] = useState("")
+    const [description, setDescription] = useState("")
     const [status, setStatus] = useState<Project["status"]>("planned")
     const [priority, setPriority] = useState<Project["priority"]>("medium")
     const [client, setClient] = useState("")
@@ -37,6 +38,8 @@ export function EditProjectDialog({ project, open, onOpenChange, onSave }: EditP
     useEffect(() => {
         if (project) {
             setName(stripHtml(project.name))
+            // If description exists, use it. If not, and name has HTML, use name as description to preserve it.
+            setDescription(project.description || (project.name !== stripHtml(project.name) ? project.name : ""))
             setStatus(project.status)
             setPriority(project.priority)
             setClient(project.client || "")
@@ -51,6 +54,7 @@ export function EditProjectDialog({ project, open, onOpenChange, onSave }: EditP
         try {
             await projectService.updateProject(project.id, {
                 name,
+                description,
                 status,
                 priority,
                 client,

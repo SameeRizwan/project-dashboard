@@ -20,6 +20,7 @@ import {
 import { Check, X, CornersOut, Star, CalendarBlank, UserCircle, Spinner, List, Paperclip, Microphone, Rows, ChartBar, Tag } from "@phosphor-icons/react/dist/ssr";
 import { ProjectDescriptionEditor } from "../ProjectDescriptionEditor";
 import { ProjectData } from "../types";
+import { useAuth } from "@/components/auth-provider";
 
 // --- Mock Data ---
 
@@ -185,11 +186,22 @@ export function StepQuickCreate({
   onCreate,
   onExpandChange,
 }: StepQuickCreateProps) {
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
   // Description is now managed by Tiptap editor
 
+  const currentUserItem = user ? {
+    id: user.uid,
+    name: user.displayName || "You",
+    avatar: user.photoURL || ""
+  } : null;
+
+  const allUsers = currentUserItem
+    ? [currentUserItem, ...USERS.filter(u => u.id !== currentUserItem.id)]
+    : USERS;
+
   // Data State
-  const [assignee, setAssignee] = useState(USERS[0]);
+  const [assignee, setAssignee] = useState(currentUserItem || USERS[0]);
   const [startDate, setStartDate] = useState<Date | undefined>(
     new Date(),
   );
@@ -241,7 +253,7 @@ export function StepQuickCreate({
       status: status.id,
       priority: priority?.id,
       tags: selectedTag ? [selectedTag.id] : [],
-      contributorIds: [assignee.id], // Assign owner as contributor
+      contributorIds: [assignee.name], // Assign owner name for ProjectCard display
       stakeholderIds: [],
       sprintType: sprintType?.id,
       workstream: workstream?.id,
@@ -294,7 +306,7 @@ export function StepQuickCreate({
         <div className="flex flex-wrap gap-2.5 items-start w-full shrink-0">
           {/* Owner Picker */}
           <GenericPicker
-            items={USERS}
+            items={allUsers}
             onSelect={setAssignee}
             selectedId={assignee.id}
             placeholder="Assign owner..."

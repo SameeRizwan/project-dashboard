@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { projectService } from "@/lib/services/project-service"
 import type { Project } from "@/lib/data/projects"
+import { collection, onSnapshot, Timestamp } from "firebase/firestore"
+import { db } from "@/lib/firebase"
 import {
     CaretLeft,
     CaretRight,
@@ -61,14 +63,30 @@ export function CalendarContent() {
     const [viewType, setViewType] = useState<ViewType>("month")
     const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
+
+
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true)
+        setLoading(true)
+
+        // Use onSnapshot for real-time updates
+        const unsubscribe = onSnapshot(collection(db, "projects"), (snapshot: any) => {
             try {
-                const projects = await projectService.getAllProjects()
                 const calendarEvents: CalendarEvent[] = []
 
-                projects.forEach((project, idx) => {
+                snapshot.docs.forEach((doc: any, idx: number) => {
+                    const data = doc.data()
+                    // Reconstruct project object (similar to projectService.getAllProjects but simpler for calendar)
+                    const project = {
+                        ...data,
+                        id: doc.id,
+                        startDate: data.startDate instanceof Timestamp ? data.startDate.toDate() : new Date(data.startDate),
+                        endDate: data.endDate instanceof Timestamp ? data.endDate.toDate() : new Date(data.endDate),
+                        tasks: (data.tasks || []).map((t: any) => ({
+                            ...t,
+                            endDate: t.endDate instanceof Timestamp ? t.endDate.toDate() : new Date(t.endDate)
+                        }))
+                    } as Project
+
                     const color = PROJECT_COLORS[idx % PROJECT_COLORS.length]
                     const projectName = stripHtml(project.name)
 
@@ -101,12 +119,16 @@ export function CalendarContent() {
 
                 setEvents(calendarEvents)
             } catch (error) {
-                console.error("Error fetching calendar data:", error)
+                console.error("Error processing calendar data:", error)
             } finally {
                 setLoading(false)
             }
-        }
-        fetchData()
+        }, (error: any) => {
+            console.error("Error listening to calendar data:", error)
+            setLoading(false)
+        })
+
+        return () => unsubscribe()
     }, [])
 
     // Generate calendar days based on view type

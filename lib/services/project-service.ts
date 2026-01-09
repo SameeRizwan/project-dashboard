@@ -58,7 +58,8 @@ export const projectService = {
         try {
             // Transform ProjectData to Project model
             const newProject = {
-                name: data.title || data.description || "Untitled Project",
+                name: data.title || "Untitled Project",
+                description: data.description || "",
                 // Default values for fields not in ProjectData but required by Project model
                 taskCount: 0,
                 progress: 0,
