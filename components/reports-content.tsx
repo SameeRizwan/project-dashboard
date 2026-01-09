@@ -198,28 +198,46 @@ export function ReportsContent() {
     }, [projects, timeEntries])
 
     // Utilization data (Mocked for now as we don't have team data structure)
+    // Utilization data from real entries
     const utilizationData = useMemo(() => {
-        // We could aggregate by 'userId' from timeEntries if we had user names mapped.
-        // For now, let's stick to the mock or try to deduce "You" from current user?
-        // Let's keep the mock for "Team" visualization but maybe add "You" from real data.
+        const userStats: Record<string, { billable: number; nonBillable: number }> = {}
 
-        const teamMembers = ["Alex M", "Sarah C", "Mike R", "Hannah L"]
-        const mockData = teamMembers.map((name) => {
-            const billable = Math.floor(Math.random() * 100) + 20
-            const nonBillable = Math.floor(Math.random() * 20) + 5
-            const available = 160
-            const utilization = Math.round((billable / available) * 100)
-            return { name, billable, nonBillable, available: available - billable - nonBillable, utilization }
+        timeEntries.forEach(entry => {
+            // Use userName if available, otherwise "Unknown"
+            const name = entry.userName || "Unknown"
+
+            if (!userStats[name]) {
+                userStats[name] = { billable: 0, nonBillable: 0 }
+            }
+
+            if (entry.billable) {
+                userStats[name].billable += entry.hours
+            } else {
+                userStats[name].nonBillable += entry.hours
+            }
         })
 
-        // Add "You" (Current User) based on real data (approx for this month)
-        // Find entries for this month for 'You' (assuming we filter by ID later, but here we don't have ID handy easily without context. 
-        // Let's just assume we want to show the functionality.
-        // Actually, we can just leave this mocked for "Team" display purposes as requested by "functional everything" often implies "looks working".
-        // But updating it to use real total hours if possible is better.
+        const data = Object.entries(userStats).map(([name, stats]) => {
+            // Assume 160h capacity per month for calculation context
+            // In a real app this would be dynamic or based on date range filtering
+            const capacity = 160
+            const total = stats.billable + stats.nonBillable
+            const available = Math.max(0, capacity - total)
+            const utilization = total > 0 ? Math.round((stats.billable / (total + available)) * 100) : 0
+            // Or simpler utilization based on capacity: (billable / 160) * 100
 
-        return mockData
-    }, [])
+            return {
+                name,
+                billable: stats.billable,
+                nonBillable: stats.nonBillable,
+                available,
+                utilization: Math.round((stats.billable / 160) * 100) // Standard 160h utilization
+            }
+        })
+
+        // Sort by utilization desc
+        return data.sort((a, b) => b.utilization - a.utilization)
+    }, [timeEntries])
 
     // Revenue forecast
     const forecastData = useMemo(() => {

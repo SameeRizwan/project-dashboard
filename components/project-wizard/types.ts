@@ -40,7 +40,9 @@ export interface ProjectData {
   deadlineType: DeadlineType;
   deadlineDate?: string;
   ownerId?: string;
+  ownerName?: string;
   contributorIds: string[];
+  contributorNames?: string[];
   stakeholderIds: string[];
   contributorOwnerships?: OwnershipEntry[];
   stakeholderOwnerships?: OwnershipEntry[];

@@ -111,7 +111,10 @@ export function StepOwnership({ data, updateData }: StepOwnershipProps) {
   // Set the logged-in user as owner on mount
   useEffect(() => {
     if (currentUserAccount && !data.ownerId) {
-      updateData({ ownerId: currentUserAccount.id });
+      updateData({
+        ownerId: currentUserAccount.id,
+        ownerName: currentUserAccount.name
+      });
       // Add current user to accounts if not already there
       setAccounts((prev) => {
         if (prev.some((a) => a.id === currentUserAccount.id)) return prev;
@@ -126,6 +129,7 @@ export function StepOwnership({ data, updateData }: StepOwnershipProps) {
       updateData({
         contributorOwnerships: [],
         contributorIds: [],
+        contributorNames: [],
       });
     }
   }, []);
@@ -160,6 +164,14 @@ export function StepOwnership({ data, updateData }: StepOwnershipProps) {
     return accounts.find((a) => a.id === ownerId) ?? currentUserAccount ?? accounts[0];
   }, [accounts, ownerId, currentUserAccount]);
 
+  // Update owner name if it changes
+  useEffect(() => {
+    if (ownerAccount && data.ownerName !== ownerAccount.name) {
+      updateData({ ownerName: ownerAccount.name });
+    }
+  }, [ownerAccount, data.ownerName, updateData]);
+
+
   const getAccountById = (accountId: string): Account | undefined =>
     accounts.find((a) => a.id === accountId);
 
@@ -168,9 +180,15 @@ export function StepOwnership({ data, updateData }: StepOwnershipProps) {
     list: OwnershipEntry[]
   ) => {
     if (target === "contributors") {
+      const names = list.map(entry => {
+        const acc = accounts.find(a => a.id === entry.accountId);
+        return acc ? acc.name : entry.accountId;
+      });
+
       updateData({
         contributorOwnerships: list,
         contributorIds: list.map((entry) => entry.accountId),
+        contributorNames: names,
       });
     } else {
       updateData({

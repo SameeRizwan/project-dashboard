@@ -68,7 +68,10 @@ export const projectService = {
                 status: (data.status as any) || "planned",
                 priority: (data.priority as any) || "medium",
                 tags: data.tags || [],
-                members: data.contributorIds,
+                members: [
+                    data.ownerName || "You",
+                    ...(data.contributorNames || [])
+                ].filter((name, index, self) => name && self.indexOf(name) === index),
                 client: "",
                 typeLabel: data.intent || "Project",
                 durationLabel: "",

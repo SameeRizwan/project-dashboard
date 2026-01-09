@@ -188,7 +188,12 @@ export function ProjectWizard({ onClose, onCreate }: ProjectWizardProps) {
                     className="h-full"
                   >
                     {step === 1 && (
-                      <StepIntent selected={data.intent} onSelect={(i) => updateData({ intent: i })} />
+                      <StepIntent
+                        selected={data.intent}
+                        onSelect={(i) => updateData({ intent: i })}
+                        title={data.title}
+                        onTitleChange={(t) => updateData({ title: t })}
+                      />
                     )}
                     {step === 2 && (
                       <StepOutcome data={data} updateData={updateData} />

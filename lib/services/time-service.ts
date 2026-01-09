@@ -15,6 +15,7 @@ import { db } from "@/lib/firebase";
 export type TimeEntry = {
     id: string;
     userId: string;
+    userName?: string; // Added for Reports/Utilization
     projectId: string;
     projectName: string; // Denormalized for easier display
     taskDescription: string;

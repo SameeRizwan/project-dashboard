@@ -129,6 +129,7 @@ export function TimeTrackingContent() {
             try {
                 const newEntry = await timeService.addTimeEntry({
                     userId: user.uid,
+                    userName: user.displayName || "Unknown",
                     projectId: timerProject,
                     projectName: project?.name || "Unknown",
                     taskDescription: timerDescription || "Timer entry",
@@ -156,6 +157,7 @@ export function TimeTrackingContent() {
         try {
             const newEntry = await timeService.addTimeEntry({
                 userId: user.uid,
+                userName: user.displayName || "Unknown",
                 projectId: newEntryProject,
                 projectName: project?.name || "Unknown",
                 taskDescription: newEntryDescription || "Manual entry",
