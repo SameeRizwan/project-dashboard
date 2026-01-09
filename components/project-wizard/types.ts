@@ -38,7 +38,7 @@ export interface ProjectData {
   metricName?: string;
   metricTarget?: string;
   deadlineType: DeadlineType;
-  deadlineDate?: string; 
+  deadlineDate?: string;
   ownerId?: string;
   contributorIds: string[];
   stakeholderIds: string[];
@@ -46,4 +46,13 @@ export interface ProjectData {
   stakeholderOwnerships?: OwnershipEntry[];
   structure?: WorkStructure;
   addStarterTasks: boolean;
+  // Quick Create specific fields
+  title?: string;
+  status?: string;
+  priority?: string;
+  tags?: string[];
+  sprintType?: string;
+  workstream?: string;
+  startDate?: string;
+  targetDate?: string;
 }

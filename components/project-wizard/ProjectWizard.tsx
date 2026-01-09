@@ -133,8 +133,8 @@ export function ProjectWizard({ onClose, onCreate }: ProjectWizardProps) {
         ) : step === QUICK_CREATE_STEP ? (
           <StepQuickCreate
             onClose={handleClose}
-            onCreate={() => {
-              onCreate?.();
+            onCreate={(quickData) => {
+              onCreate?.(quickData);
               toast.success("Project created successfully");
               onClose();
             }}

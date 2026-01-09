@@ -142,10 +142,18 @@ export function ProjectTimeline({ projects }: ProjectTimelineProps) {
     console.log("Update project not implemented yet for Firestore", { projectId, newStart })
   }
 
-  const handleUpdateProjectDuration = () => { }
-  const handleUpdateTaskDuration = () => { }
-  const toggleTaskStatus = () => { }
-  const handleDoubleClick = () => { }
+  const handleUpdateProjectDuration = (projectId: string, newStart: Date, newEnd: Date) => {
+    console.log("Update project duration not implemented", { projectId, newStart, newEnd })
+  }
+  const handleUpdateTaskDuration = (projectId: string, taskId: string, newStart: Date, newEnd: Date) => {
+    console.log("Update task duration not implemented", { projectId, taskId, newStart, newEnd })
+  }
+  const toggleTaskStatus = (projectId: string, taskId: string) => {
+    console.log("Toggle task status not implemented", { projectId, taskId })
+  }
+  const handleDoubleClick = (type: "project" | "task", projectId: string, taskId?: string) => {
+    console.log("Double click not implemented", { type, projectId, taskId })
+  }
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-background min-w-0">

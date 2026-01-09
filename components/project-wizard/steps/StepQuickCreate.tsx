@@ -19,6 +19,7 @@ import {
 } from "../../ui/command";
 import { Check, X, CornersOut, Star, CalendarBlank, UserCircle, Spinner, List, Paperclip, Microphone, Rows, ChartBar, Tag } from "@phosphor-icons/react/dist/ssr";
 import { ProjectDescriptionEditor } from "../ProjectDescriptionEditor";
+import { ProjectData } from "../types";
 
 // --- Mock Data ---
 
@@ -175,7 +176,7 @@ function DatePicker({
 
 interface StepQuickCreateProps {
   onClose: () => void;
-  onCreate: () => void;
+  onCreate: (data: ProjectData) => void;
   onExpandChange?: (isExpanded: boolean) => void;
 }
 
@@ -223,9 +224,34 @@ export function StepQuickCreate({
     return () => clearTimeout(timer);
   }, []);
 
+  const handleCreate = () => {
+    const data: ProjectData = {
+      mode: 'quick',
+      title: title,
+      successType: 'undefined',
+      deliverables: [],
+      metrics: [],
+      addStarterTasks: false,
+      deadlineType: targetDate ? 'target' : 'none',
+      deadlineDate: targetDate?.toISOString(),
+      startDate: startDate?.toISOString(),
+      targetDate: targetDate?.toISOString(),
+      ownerId: assignee.id,
+      description: title, // Fallback since description editor state is not available here
+      status: status.id,
+      priority: priority?.id,
+      tags: selectedTag ? [selectedTag.id] : [],
+      contributorIds: [assignee.id], // Assign owner as contributor
+      stakeholderIds: [],
+      sprintType: sprintType?.id,
+      workstream: workstream?.id,
+    };
+    onCreate(data);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-      onCreate();
+      handleCreate();
     }
   };
 
@@ -384,7 +410,7 @@ export function StepQuickCreate({
                     clipPath="url(#clip0_13_2475)"
                     id="Icon / Loader"
                   >
-                  <Spinner className="size-4 text-muted-foreground" />
+                    <Spinner className="size-4 text-muted-foreground" />
                   </g>
                   <defs>
                     <clipPath id="clip0_13_2475">
@@ -547,7 +573,7 @@ export function StepQuickCreate({
           </div>
 
           <button
-            onClick={onCreate}
+            onClick={handleCreate}
             className="bg-primary hover:bg-primary/90 flex gap-3 h-10 items-center justify-center px-4 py-2 rounded-lg transition-colors cursor-pointer"
           >
             <span className="font-medium text-primary-foreground text-sm leading-5">

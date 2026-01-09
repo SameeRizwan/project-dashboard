@@ -58,15 +58,15 @@ export const projectService = {
         try {
             // Transform ProjectData to Project model
             const newProject = {
-                name: data.description || "Untitled Project", // Title isn't in ProjectData explicitly? Using description or fallback
+                name: data.title || data.description || "Untitled Project",
                 // Default values for fields not in ProjectData but required by Project model
                 taskCount: 0,
                 progress: 0,
-                startDate: Timestamp.fromDate(new Date()),
-                endDate: data.deadlineDate ? Timestamp.fromDate(new Date(data.deadlineDate)) : Timestamp.fromDate(new Date()),
-                status: "planned",
-                priority: "medium",
-                tags: [],
+                startDate: data.startDate ? Timestamp.fromDate(new Date(data.startDate)) : Timestamp.fromDate(new Date()),
+                endDate: data.deadlineDate ? Timestamp.fromDate(new Date(data.deadlineDate)) : (data.targetDate ? Timestamp.fromDate(new Date(data.targetDate)) : Timestamp.fromDate(new Date())),
+                status: (data.status as any) || "planned",
+                priority: (data.priority as any) || "medium",
+                tags: data.tags || [],
                 members: data.contributorIds,
                 client: "",
                 typeLabel: data.intent || "Project",
