@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useMemo } from "react"
-import { projects as initialProjects, type Project } from "@/lib/data/projects"
+import type { Project } from "@/lib/data/projects"
 import {
   differenceInCalendarDays,
   addDays,
@@ -27,49 +27,39 @@ import { cn } from "@/lib/utils"
 import { DraggableBar } from "@/components/project-timeline-draggable-bar"
 import { PriorityGlyphIcon } from "@/components/priority-badge"
 
-// Fixed "today" so the demo stays visually consistent over time.
-// This controls the initial viewport and the vertical "today" line.
 const FIXED_TODAY = new Date(2024, 0, 23) // 23 Jan 2024
 
-// projects imported from lib/data
+export type ProjectTimelineProps = {
+  projects: Project[]
+}
 
-export function ProjectTimeline() {
-  const [projects, setProjects] = useState(initialProjects)
-  const [expandedProjects, setExpandedProjects] = useState<string[]>(initialProjects.map((p) => p.id))
+export function ProjectTimeline({ projects }: ProjectTimelineProps) {
+  // Local state for UI toggles only, not data
+  const [expandedProjects, setExpandedProjects] = useState<string[]>([])
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [viewMode, setViewMode] = useState<"Day" | "Week" | "Month" | "Quarter">("Week")
   const [zoom, setZoom] = useState(1)
-  const [editDialog, setEditDialog] = useState<{
-    isOpen: boolean
-    type: "project" | "task" | null
-    projectId: string | null
-    taskId: string | null
-  }>({ isOpen: false, type: null, projectId: null, taskId: null })
-  const [editStartDate, setEditStartDate] = useState("")
-  const [editEndDate, setEditEndDate] = useState("")
-  // Start the visible range one week before the week of FIXED_TODAY
-  // so the "today" line is not too close to the name column.
+
+  // Viewport state
   const [viewStartDate, setViewStartDate] = useState(
     () => startOfWeek(addWeeks(FIXED_TODAY, -1), { weekStartsOn: 1 }),
   )
+
+  // Refs
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const nameColRef = useRef<HTMLDivElement>(null)
   const shouldAutoScrollToTodayRef = useRef(true)
   const [nameColWidth, setNameColWidth] = useState(280)
   const [todayOffsetDays, setTodayOffsetDays] = useState<number | null>(null)
-  const [confirmDialog, setConfirmDialog] = useState<{
-    isOpen: boolean
-    message: string
-    onConfirm: () => void
-    onCancel: () => void
-  }>({
-    isOpen: false,
-    message: "",
-    onConfirm: () => { },
-    onCancel: () => { },
-  })
 
   const viewModes = useMemo(() => ["Day", "Week", "Month", "Quarter"] as const, [])
+
+  // Initialize expanded projects when projects load
+  useEffect(() => {
+    if (projects.length > 0 && expandedProjects.length === 0) {
+      setExpandedProjects(projects.map(p => p.id))
+    }
+  }, [projects]) // Only run when projects change
 
   const toggleProject = (projectId: string) => {
     setExpandedProjects((prev) =>
@@ -88,7 +78,7 @@ export function ProjectTimeline() {
     setViewStartDate((d) => (step === 1 ? addWeeks(d, weeksStep) : subWeeks(d, weeksStep)))
   }
 
-  // Generate dates for the timeline
+  // Generate dates
   const getDates = (): Date[] => {
     const daysToRender = viewMode === "Day" ? 21 : viewMode === "Week" ? 60 : viewMode === "Month" ? 90 : 120
     return Array.from({ length: daysToRender }).map((_, i) => addDays(viewStartDate, i))
@@ -96,7 +86,6 @@ export function ProjectTimeline() {
 
   const dates = useMemo(() => getDates(), [viewMode, viewStartDate])
 
-  // Per-day width depends on view for practical Month view
   const baseCellWidth = viewMode === "Day" ? 140 : viewMode === "Week" ? 60 : viewMode === "Month" ? 40 : 20
   const cellWidth = Math.max(20, Math.round(baseCellWidth * zoom))
   const timelineWidth = dates.length * cellWidth
@@ -117,7 +106,6 @@ export function ProjectTimeline() {
     return () => ro.disconnect()
   }, [])
 
-  // Calculate today line position (based on fixed demo date)
   useEffect(() => {
     const offset = differenceInCalendarDays(FIXED_TODAY, dates[0])
     if (offset < 0 || offset >= dates.length) {
@@ -143,178 +131,21 @@ export function ProjectTimeline() {
     shouldAutoScrollToTodayRef.current = false
   }, [todayOffsetDays, cellWidth, isSidebarOpen, nameColWidth])
 
-  const toggleTaskStatus = (projectId: string, taskId: string) => {
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.id !== projectId) return p
-        return {
-          ...p,
-          tasks: p.tasks.map((t) => {
-            if (t.id !== taskId) return t
-            return { ...t, status: t.status === "done" ? "todo" : "done" }
-          }),
-        }
-      }),
-    )
-  }
+  // Placeholder handlers - Interaction disabled for now as we are using Firestore read-only here
+  // To handle updates, we would need to pass callback props up to Parent
 
   const handleUpdateTask = (projectId: string, taskId: string, newStart: Date) => {
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.id !== projectId) return p
-
-        const task = p.tasks.find((t) => t.id === taskId)
-        if (!task) return p
-
-        const taskDuration = differenceInCalendarDays(task.endDate, task.startDate) + 1
-        const newEnd = addDays(newStart, taskDuration - 1)
-
-        const needsExpand = newStart < p.startDate || newEnd > p.endDate
-        if (needsExpand) {
-          showConfirmDialog(
-            "This task is outside the project range. Expand project to fit?",
-            () => {
-              setProjects((prev) =>
-                prev.map((proj) => {
-                  if (proj.id !== p.id) return proj
-                  return {
-                    ...proj,
-                    startDate: newStart < proj.startDate ? newStart : proj.startDate,
-                    endDate: newEnd > proj.endDate ? newEnd : proj.endDate,
-                    tasks: proj.tasks.map((t) => (t.id === taskId ? { ...t, startDate: newStart, endDate: newEnd } : t)),
-                  }
-                })
-              )
-            }
-          )
-          return p
-        }
-
-        return {
-          ...p,
-          tasks: p.tasks.map((t) => (t.id === taskId ? { ...t, startDate: newStart, endDate: newEnd } : t)),
-        }
-      }),
-    )
+    console.log("Update task not implemented yet for Firestore", { projectId, taskId, newStart })
   }
 
-  const handleUpdateProjectDuration = (projectId: string, newStart: Date, newEnd: Date) => {
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.id !== projectId) return p
-        return {
-          ...p,
-          startDate: newStart,
-          endDate: newEnd,
-          tasks: p.tasks, // Keep tasks unchanged for now
-        }
-      }),
-    )
+  const handleUpdateProject = (projectId: string, newStart: Date) => {
+    console.log("Update project not implemented yet for Firestore", { projectId, newStart })
   }
 
-  const handleUpdateTaskDuration = (projectId: string, taskId: string, newStart: Date, newEnd: Date) => {
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.id !== projectId) return p
-        return {
-          ...p,
-          tasks: p.tasks.map((t) => (t.id === taskId ? { ...t, startDate: newStart, endDate: newEnd } : t)),
-        }
-      }),
-    )
-  }
-
-  const showConfirmDialog = (message: string, onConfirm: () => void, onCancel: () => void = () => { }) => {
-    setConfirmDialog({
-      isOpen: true,
-      message,
-      onConfirm,
-      onCancel,
-    })
-  }
-
-  const handleConfirmDialogClose = (confirmed: boolean) => {
-    if (confirmed) {
-      confirmDialog.onConfirm()
-    } else {
-      confirmDialog.onCancel()
-    }
-    setConfirmDialog({
-      isOpen: false,
-      message: "",
-      onConfirm: () => { },
-      onCancel: () => { },
-    })
-  }
-
-  const handleUpdateProject = (projectId: string, newStart: Date, confirmed: boolean = false) => {
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.id !== projectId) return p
-
-        const durationDays = differenceInCalendarDays(p.endDate, p.startDate) + 1
-        const newEnd = addDays(newStart, durationDays - 1)
-        const diff = differenceInCalendarDays(newStart, p.startDate)
-
-        const shouldMoveChildren = p.tasks.length > 0
-        if (shouldMoveChildren && !confirmed) {
-          showConfirmDialog(
-            `Move all ${p.tasks.length} tasks along with the project?`,
-            () => {
-              // Re-run the update with confirmation
-              handleUpdateProject(projectId, newStart, true)
-            }
-          )
-          return p // Don't update yet, wait for confirmation
-        }
-
-        return {
-          ...p,
-          startDate: newStart,
-          endDate: newEnd,
-          tasks: shouldMoveChildren
-            ? p.tasks.map((t) => ({
-              ...t,
-              startDate: addDays(t.startDate, diff),
-              endDate: addDays(t.endDate, diff),
-            }))
-            : p.tasks,
-        }
-      }),
-    )
-  }
-
-  const handleSaveEdit = () => {
-    if (!editDialog.type || !editDialog.projectId) return
-
-    const newStart = new Date(editStartDate)
-    const newEnd = new Date(editEndDate)
-
-    if (editDialog.type === "project") {
-      handleUpdateProject(editDialog.projectId, newStart)
-    } else if (editDialog.type === "task" && editDialog.taskId) {
-      handleUpdateTask(editDialog.projectId, editDialog.taskId, newStart)
-    }
-
-    setEditDialog({ isOpen: false, type: null, projectId: null, taskId: null })
-  }
-
-  const handleDoubleClick = (type: "project" | "task", projectId: string, taskId?: string) => {
-    const item = type === "project"
-      ? projects.find(p => p.id === projectId)
-      : projects.find(p => p.id === projectId)?.tasks.find(t => t.id === taskId)
-
-    if (!item) return
-
-    setEditDialog({
-      isOpen: true,
-      type,
-      projectId,
-      taskId: taskId || null
-    })
-    setEditStartDate(item.startDate.toISOString().split('T')[0])
-    setEditEndDate(item.endDate.toISOString().split('T')[0])
-  }
+  const handleUpdateProjectDuration = () => { }
+  const handleUpdateTaskDuration = () => { }
+  const toggleTaskStatus = () => { }
+  const handleDoubleClick = () => { }
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-background min-w-0">
@@ -683,79 +514,6 @@ export function ProjectTimeline() {
           </div>
         ))}
       </div>
-
-      {/* Edit Date Dialog */}
-      <Dialog open={editDialog.isOpen} onOpenChange={(open) => {
-        if (!open) setEditDialog({ isOpen: false, type: null, projectId: null, taskId: null });
-      }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Date</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label htmlFor="item-name" className="text-sm font-medium">Name {editDialog.type === "project" ? "(Project)" : "(Task)"}</label>
-              <Input
-                id="item-name"
-                value={editDialog.type === "project"
-                  ? projects.find(p => p.id === editDialog.projectId)?.name || ''
-                  : projects.find(p => p.id === editDialog.projectId)?.tasks.find(t => t.id === editDialog.taskId)?.name || ''
-                }
-                disabled
-                className="bg-muted"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="start-date" className="text-sm font-medium">Start Date</label>
-              <Input
-                id="start-date"
-                type="date"
-                value={editStartDate}
-                onChange={(e) => setEditStartDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="end-date" className="text-sm font-medium">End Date</label>
-              <Input
-                id="end-date"
-                type="date"
-                value={editEndDate}
-                onChange={(e) => setEditEndDate(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setEditDialog({ isOpen: false, type: null, projectId: null, taskId: null })}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveEdit}>
-              Save
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirmation Dialog */}
-      <Dialog open={confirmDialog.isOpen} onOpenChange={(open) => {
-        if (!open) handleConfirmDialogClose(false);
-      }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Confirm</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-muted-foreground">{confirmDialog.message}</p>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => handleConfirmDialogClose(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => handleConfirmDialogClose(true)}>
-              Confirm
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

@@ -7,7 +7,10 @@ import { ProjectTimeline } from "@/components/project-timeline"
 import { ProjectCardsView } from "@/components/project-cards-view"
 import { ProjectBoardView } from "@/components/project-board-view"
 import { ProjectWizard } from "@/components/project-wizard/ProjectWizard"
-import { computeFilterCounts, projects } from "@/lib/data/projects"
+import { computeFilterCounts } from "@/lib/data/projects"
+import type { Project } from "@/lib/data/projects"
+import { projectService } from "@/lib/services/project-service"
+import { ProjectData } from "@/components/project-wizard/types"
 import { DEFAULT_VIEW_OPTIONS, type FilterChip, type ViewOptions } from "@/lib/view-options"
 import { chipsToParams, paramsToChips } from "@/lib/url/filters"
 
@@ -17,7 +20,7 @@ export function ProjectsContent() {
   const searchParams = useSearchParams()
 
   const [viewOptions, setViewOptions] = useState<ViewOptions>(DEFAULT_VIEW_OPTIONS)
-
+  const [projects, setProjects] = useState<Project[]>([])
   const [filters, setFilters] = useState<FilterChip[]>([])
 
   const [isWizardOpen, setIsWizardOpen] = useState(false)
@@ -33,8 +36,24 @@ export function ProjectsContent() {
     setIsWizardOpen(false)
   }
 
-  const handleProjectCreated = () => {
+  const fetchProjects = async () => {
+    const list = await projectService.getAllProjects()
+    setProjects(list)
+  }
+
+  useEffect(() => {
+    fetchProjects()
+  }, [])
+
+  const handleProjectCreated = async (data: ProjectData) => {
+    await projectService.createProject(data)
+    fetchProjects()
     setIsWizardOpen(false)
+  }
+
+  const handleSeed = async () => {
+    await projectService.seedProjects()
+    fetchProjects()
   }
 
   const removeFilter = (key: string, value: string) => {
@@ -124,7 +143,12 @@ export function ProjectsContent() {
         onViewOptionsChange={setViewOptions}
         onAddProject={openWizard}
       />
-      {viewOptions.viewType === "timeline" && <ProjectTimeline />}
+      {projects.length === 0 && (
+        <div className="flex justify-center p-4">
+          <button onClick={handleSeed} className="text-sm text-blue-500 underline">Seed Data (Dev Only)</button>
+        </div>
+      )}
+      {viewOptions.viewType === "timeline" && <ProjectTimeline projects={filteredProjects} />}
       {viewOptions.viewType === "list" && <ProjectCardsView projects={filteredProjects} onCreateProject={openWizard} />}
       {viewOptions.viewType === "board" && <ProjectBoardView projects={filteredProjects} onAddProject={openWizard} />}
       {isWizardOpen && (
