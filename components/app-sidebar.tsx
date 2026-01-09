@@ -33,6 +33,7 @@ import {
   SignOut,
   CalendarBlank,
   Timer,
+  FileText,
 } from "@phosphor-icons/react/dist/ssr"
 import { activeProjects, footerItems, navItems, type NavItemId, type SidebarFooterItemId } from "@/lib/data/sidebar"
 import { useAuth } from "@/components/auth-provider"
@@ -45,6 +46,7 @@ const navItemIcons: Record<NavItemId, React.ComponentType<{ className?: string }
   calendar: CalendarBlank,
   "time-tracking": Timer,
   performance: ChartBar,
+  reports: FileText,
 }
 
 const footerItemIcons: Record<SidebarFooterItemId, React.ComponentType<{ className?: string }>> = {
@@ -120,27 +122,6 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 )
               })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-3 text-xs font-medium text-muted-foreground">
-            Active Projects
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {activeProjects.map((project) => (
-                <SidebarMenuItem key={project.name}>
-                  <SidebarMenuButton className="h-9 rounded-lg px-3 group">
-                    <ProgressCircle progress={project.progress} color={project.color} size={18} />
-                    <span className="flex-1 truncate text-sm">{project.name}</span>
-                    <span className="opacity-0 group-hover:opacity-100 rounded p-0.5 hover:bg-accent">
-                      <span className="text-muted-foreground text-lg">···</span>
-                    </span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
