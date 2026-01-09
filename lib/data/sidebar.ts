@@ -5,8 +5,8 @@ export type SidebarFooterItemId = "settings" | "templates" | "help"
 export type NavItem = {
     id: NavItemId
     label: string
+    href: string
     badge?: number
-    isActive?: boolean
 }
 
 export type ActiveProjectSummary = {
@@ -19,14 +19,15 @@ export type ActiveProjectSummary = {
 export type SidebarFooterItem = {
     id: SidebarFooterItemId
     label: string
+    href: string
 }
 
 export const navItems: NavItem[] = [
-    { id: "inbox", label: "Inbox", badge: 24 },
-    { id: "my-tasks", label: "My task" },
-    { id: "projects", label: "Projects", isActive: true },
-    { id: "clients", label: "Clients" },
-    { id: "performance", label: "Performance" },
+    { id: "inbox", label: "Inbox", href: "/inbox", badge: 24 },
+    { id: "my-tasks", label: "My Tasks", href: "/my-tasks" },
+    { id: "projects", label: "Projects", href: "/" },
+    { id: "clients", label: "Clients", href: "/clients" },
+    { id: "performance", label: "Performance", href: "/performance" },
 ]
 
 export const activeProjects: ActiveProjectSummary[] = [
@@ -37,7 +38,7 @@ export const activeProjects: ActiveProjectSummary[] = [
 ]
 
 export const footerItems: SidebarFooterItem[] = [
-    { id: "settings", label: "Settings" },
-    { id: "templates", label: "Templates" },
-    { id: "help", label: "Help" },
+    { id: "settings", label: "Settings", href: "/settings" },
+    { id: "templates", label: "Templates", href: "/templates" },
+    { id: "help", label: "Help", href: "/help" },
 ]

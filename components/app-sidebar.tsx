@@ -1,5 +1,7 @@
 "use client"
 
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 import {
   Sidebar,
   SidebarContent,
@@ -28,8 +30,10 @@ import {
   Question,
   CaretRight,
   CaretUpDown,
+  SignOut,
 } from "@phosphor-icons/react/dist/ssr"
 import { activeProjects, footerItems, navItems, type NavItemId, type SidebarFooterItemId } from "@/lib/data/sidebar"
+import { useAuth } from "@/components/auth-provider"
 
 const navItemIcons: Record<NavItemId, React.ComponentType<{ className?: string }>> = {
   inbox: Tray,
@@ -46,6 +50,14 @@ const footerItemIcons: Record<SidebarFooterItemId, React.ComponentType<{ classNa
 }
 
 export function AppSidebar() {
+  const pathname = usePathname()
+  const { user, logout } = useAuth()
+
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/"
+    return pathname.startsWith(href)
+  }
+
   return (
     <Sidebar className="border-border/40 border-r-0 shadow-none border-none">
       <SidebarHeader className="p-4">
@@ -82,29 +94,28 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                  {(() => {
-                    const Icon = navItemIcons[item.id]
-                    return null
-                  })()}
-                  <SidebarMenuButton
-                    isActive={item.isActive}
-                    className="h-9 rounded-lg px-3 font-normal text-muted-foreground"
-                  >
-                    {(() => {
-                      const Icon = navItemIcons[item.id]
-                      return Icon ? <Icon className="h-[18px] w-[18px]" /> : null
-                    })()}
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                  {item.badge && (
-                    <SidebarMenuBadge className="bg-muted text-muted-foreground rounded-full px-2">
-                      {item.badge}
-                    </SidebarMenuBadge>
-                  )}
-                </SidebarMenuItem>
-              ))}
+              {navItems.map((item) => {
+                const Icon = navItemIcons[item.id]
+                const active = isActive(item.href)
+                return (
+                  <SidebarMenuItem key={item.label}>
+                    <Link href={item.href} className="w-full">
+                      <SidebarMenuButton
+                        isActive={active}
+                        className="h-9 rounded-lg px-3 font-normal text-muted-foreground"
+                      >
+                        {Icon && <Icon className="h-[18px] w-[18px]" />}
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </Link>
+                    {item.badge && (
+                      <SidebarMenuBadge className="bg-muted text-muted-foreground rounded-full px-2">
+                        {item.badge}
+                      </SidebarMenuBadge>
+                    )}
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -133,29 +144,41 @@ export function AppSidebar() {
 
       <SidebarFooter className="border-t border-border/40 p-2">
         <SidebarMenu>
-          {footerItems.map((item) => (
-            <SidebarMenuItem key={item.label}>
-              <SidebarMenuButton className="h-9 rounded-lg px-3 text-muted-foreground">
-                {(() => {
-                  const Icon = footerItemIcons[item.id]
-                  return Icon ? <Icon className="h-[18px] w-[18px]" /> : null
-                })()}
-                <span>{item.label}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {footerItems.map((item) => {
+            const Icon = footerItemIcons[item.id]
+            const active = isActive(item.href)
+            return (
+              <SidebarMenuItem key={item.label}>
+                <Link href={item.href} className="w-full">
+                  <SidebarMenuButton
+                    isActive={active}
+                    className="h-9 rounded-lg px-3 text-muted-foreground"
+                  >
+                    {Icon && <Icon className="h-[18px] w-[18px]" />}
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+            )
+          })}
         </SidebarMenu>
 
         <div className="mt-2 flex items-center gap-3 rounded-lg p-2 hover:bg-accent cursor-pointer">
           <Avatar className="h-8 w-8">
-            <AvatarImage src="/avatar-profile.jpg" />
-            <AvatarFallback>JD</AvatarFallback>
+            <AvatarImage src={user?.photoURL || "/avatar-profile.jpg"} />
+            <AvatarFallback>{user?.displayName?.charAt(0) || "U"}</AvatarFallback>
           </Avatar>
-          <div className="flex flex-1 flex-col">
-            <span className="text-sm font-medium">Jason D</span>
-            <span className="text-xs text-muted-foreground">jason.duong@mail.com</span>
+          <div className="flex flex-1 flex-col min-w-0">
+            <span className="text-sm font-medium truncate">{user?.displayName || "User"}</span>
+            <span className="text-xs text-muted-foreground truncate">{user?.email || ""}</span>
           </div>
-          <CaretRight className="h-4 w-4 text-muted-foreground" />
+          <button
+            onClick={logout}
+            className="rounded p-1 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+            title="Sign out"
+          >
+            <SignOut className="h-4 w-4" />
+          </button>
         </div>
       </SidebarFooter>
     </Sidebar>
