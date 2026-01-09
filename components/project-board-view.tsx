@@ -6,9 +6,10 @@ import { ProjectCard } from "@/components/project-card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
-import { DotsThreeVertical, Plus, StackSimple, Spinner, CircleNotch, CheckCircle, Trash } from "@phosphor-icons/react/dist/ssr"
+import { DotsThreeVertical, Plus, StackSimple, Spinner, CircleNotch, CheckCircle, Trash, PencilSimple } from "@phosphor-icons/react/dist/ssr"
 import { projectService } from "@/lib/services/project-service"
 import { toast } from "sonner"
+import { EditProjectDialog } from "@/components/edit-project-dialog"
 
 function columnStatusIcon(status: Project["status"]): React.JSX.Element {
   switch (status) {
@@ -54,10 +55,17 @@ function columnStatusLabel(status: Project["status"]): string {
 export function ProjectBoardView({ projects, loading = false, onAddProject, onRefresh }: ProjectBoardViewProps) {
   const [items, setItems] = useState<Project[]>(projects)
   const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [editingProject, setEditingProject] = useState<Project | null>(null)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   useEffect(() => {
     setItems(projects)
   }, [projects])
+
+  const handleEdit = (project: Project) => {
+    setEditingProject(project)
+    setEditDialogOpen(true)
+  }
 
   const groups = useMemo(() => {
     const m = new Map<Project["status"], Project[]>()
@@ -110,6 +118,14 @@ export function ProjectBoardView({ projects, loading = false, onAddProject, onRe
             </PopoverTrigger>
             <PopoverContent className="w-40 p-2" align="end">
               <div className="space-y-1">
+                <button
+                  className="w-full rounded-md px-2 py-1 text-left text-sm hover:bg-accent flex items-center gap-2"
+                  onClick={() => handleEdit(p)}
+                >
+                  <PencilSimple className="h-4 w-4" />
+                  Edit
+                </button>
+                <div className="border-t border-border my-1" />
                 {COLUMN_ORDER.map((s) => (
                   <button
                     key={s}
@@ -227,6 +243,14 @@ export function ProjectBoardView({ projects, loading = false, onAddProject, onRe
           </div>
         ))}
       </div>
+
+      {/* Edit Project Dialog */}
+      <EditProjectDialog
+        project={editingProject}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSave={onRefresh}
+      />
     </div>
   )
 }

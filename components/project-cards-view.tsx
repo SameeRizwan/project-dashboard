@@ -1,14 +1,15 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import type { Project } from "@/lib/data/projects"
 import { ProjectCard } from "@/components/project-card"
+import { EditProjectDialog } from "@/components/edit-project-dialog"
 import { Plus, FolderOpen, DotsThreeVertical, Trash, PencilSimple } from "@phosphor-icons/react/dist/ssr"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { projectService } from "@/lib/services/project-service"
 import { toast } from "sonner"
-import { useState } from "react"
 
 type ProjectCardsViewProps = {
   projects: Project[]
@@ -19,12 +20,13 @@ type ProjectCardsViewProps = {
 
 export function ProjectCardsView({ projects, loading = false, onCreateProject, onRefresh }: ProjectCardsViewProps) {
   const [items, setItems] = useState(projects)
-  const isEmpty = !loading && items.length === 0
+  const [editingProject, setEditingProject] = useState<Project | null>(null)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   // Sync with projects prop
-  if (projects !== items && projects.length !== items.length) {
+  useEffect(() => {
     setItems(projects)
-  }
+  }, [projects])
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this project?")) return
@@ -37,6 +39,13 @@ export function ProjectCardsView({ projects, loading = false, onCreateProject, o
       toast.error("Failed to delete project")
     }
   }
+
+  const handleEdit = (project: Project) => {
+    setEditingProject(project)
+    setEditDialogOpen(true)
+  }
+
+  const isEmpty = !loading && items.length === 0
 
   return (
     <div className="p-4">
@@ -78,7 +87,7 @@ export function ProjectCardsView({ projects, loading = false, onCreateProject, o
                     <div className="space-y-1">
                       <button
                         className="w-full rounded-md px-2 py-1 text-left text-sm hover:bg-accent flex items-center gap-2"
-                        onClick={() => toast.info("Edit functionality coming soon")}
+                        onClick={() => handleEdit(p)}
                       >
                         <PencilSimple className="h-4 w-4" />
                         Edit
@@ -106,6 +115,14 @@ export function ProjectCardsView({ projects, loading = false, onCreateProject, o
           </button>
         </div>
       )}
+
+      {/* Edit Project Dialog */}
+      <EditProjectDialog
+        project={editingProject}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSave={onRefresh}
+      />
     </div>
   )
 }
