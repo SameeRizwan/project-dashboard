@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { projectService } from "@/lib/services/project-service"
 import type { Project } from "@/lib/data/projects"
@@ -11,8 +12,10 @@ import {
     TrendDown,
     CheckCircle,
     Clock,
-    Users,
     Folder,
+    ChartBar,
+    ListChecks,
+    Target,
 } from "@phosphor-icons/react/dist/ssr"
 import {
     BarChart,
@@ -25,12 +28,32 @@ import {
     PieChart,
     Pie,
     Cell,
-    LineChart,
-    Line,
     Legend,
 } from "recharts"
 
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"]
+const CHART_COLORS = {
+    primary: "#3b82f6",
+    success: "#10b981",
+    warning: "#f59e0b",
+    danger: "#ef4444",
+    purple: "#8b5cf6",
+    pink: "#ec4899",
+}
+
+const STATUS_COLORS: Record<string, string> = {
+    Active: CHART_COLORS.primary,
+    Completed: CHART_COLORS.success,
+    Planned: CHART_COLORS.warning,
+    Backlog: CHART_COLORS.purple,
+    Cancelled: CHART_COLORS.danger,
+}
+
+const PRIORITY_COLORS: Record<string, string> = {
+    Urgent: CHART_COLORS.danger,
+    High: CHART_COLORS.warning,
+    Medium: CHART_COLORS.primary,
+    Low: CHART_COLORS.success,
+}
 
 export function PerformanceContent() {
     const [projects, setProjects] = useState<Project[]>([])
@@ -87,6 +110,7 @@ export function PerformanceContent() {
         return Object.entries(statusCounts).map(([name, value]) => ({
             name: name.charAt(0).toUpperCase() + name.slice(1),
             value,
+            fill: STATUS_COLORS[name.charAt(0).toUpperCase() + name.slice(1)] || CHART_COLORS.primary,
         }))
     }, [projects])
 
@@ -99,6 +123,7 @@ export function PerformanceContent() {
         return Object.entries(priorityCounts).map(([name, value]) => ({
             name: name.charAt(0).toUpperCase() + name.slice(1),
             value,
+            fill: PRIORITY_COLORS[name.charAt(0).toUpperCase() + name.slice(1)] || CHART_COLORS.primary,
         }))
     }, [projects])
 
@@ -106,7 +131,7 @@ export function PerformanceContent() {
         return projects
             .slice(0, 8)
             .map((p) => ({
-                name: p.name.length > 20 ? p.name.slice(0, 20) + "..." : p.name,
+                name: p.name.length > 15 ? p.name.slice(0, 15) + "..." : p.name,
                 progress: p.progress,
                 tasks: p.taskCount,
             }))
@@ -122,13 +147,31 @@ export function PerformanceContent() {
 
     return (
         <div className="flex flex-1 flex-col bg-background mx-2 my-2 border border-border rounded-lg min-w-0 overflow-auto">
-            {/* Header */}
-            <div className="border-b border-border/40 px-6 py-4">
-                <h1 className="text-2xl font-bold">Performance</h1>
-                <p className="text-sm text-muted-foreground mt-1">
-                    Track project metrics and team performance
-                </p>
-            </div>
+            {/* Header - matching project page style */}
+            <header className="flex flex-col border-b border-border/40">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                    <div className="flex items-center gap-3">
+                        <SidebarTrigger className="h-8 w-8 rounded-lg hover:bg-accent text-muted-foreground" />
+                        <p className="text-base font-medium text-foreground">Performance</p>
+                    </div>
+                </div>
+                <div className="flex items-center justify-between px-4 pb-3 pt-3">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                            <Folder className="h-4 w-4" />
+                            {stats.totalProjects} projects
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                            <ListChecks className="h-4 w-4" />
+                            {stats.totalTasks} tasks
+                        </span>
+                        <span className="flex items-center gap-1.5 text-green-500">
+                            <CheckCircle className="h-4 w-4" />
+                            {stats.completedTasks} completed
+                        </span>
+                    </div>
+                </div>
+            </header>
 
             {/* KPI Cards */}
             <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -136,26 +179,29 @@ export function PerformanceContent() {
                     title="Total Projects"
                     value={stats.totalProjects}
                     icon={<Folder className="h-5 w-5" />}
-                    trend={stats.activeProjects > 0 ? "up" : undefined}
-                    trendValue={`${stats.activeProjects} active`}
+                    color="primary"
+                    subtitle={`${stats.activeProjects} active`}
                 />
                 <KPICard
                     title="Completion Rate"
                     value={`${stats.completionRate}%`}
-                    icon={<CheckCircle className="h-5 w-5" />}
+                    icon={<Target className="h-5 w-5" />}
+                    color="success"
                     trend={stats.completionRate > 50 ? "up" : "down"}
-                    trendValue={`${stats.completedProjects} completed`}
+                    subtitle={`${stats.completedProjects} completed`}
                 />
                 <KPICard
                     title="Total Tasks"
                     value={stats.totalTasks}
-                    icon={<Clock className="h-5 w-5" />}
-                    trendValue={`${stats.taskCompletionRate}% done`}
+                    icon={<ListChecks className="h-5 w-5" />}
+                    color="warning"
+                    subtitle={`${stats.taskCompletionRate}% done`}
                 />
                 <KPICard
                     title="Avg Progress"
                     value={`${stats.avgProgress}%`}
-                    icon={<TrendUp className="h-5 w-5" />}
+                    icon={<ChartBar className="h-5 w-5" />}
+                    color="purple"
                     trend={stats.avgProgress > 40 ? "up" : "down"}
                 />
             </div>
@@ -163,22 +209,31 @@ export function PerformanceContent() {
             {/* Charts Row */}
             <div className="grid gap-6 px-6 pb-6 lg:grid-cols-2">
                 {/* Project Progress Bar Chart */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">Project Progress</CardTitle>
+                <Card className="rounded-2xl border-border/60">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-semibold flex items-center gap-2">
+                            <ChartBar className="h-5 w-5 text-primary" />
+                            Project Progress
+                        </CardTitle>
+                        <CardDescription>Progress overview of active projects</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[300px]">
+                        <div className="h-[280px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={progressData} layout="vertical">
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                    <XAxis type="number" domain={[0, 100]} />
-                                    <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} />
+                                <BarChart data={progressData} layout="vertical" margin={{ left: 0, right: 20 }}>
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                                    <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                                    <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                                     <Tooltip
-                                        contentStyle={{ borderRadius: "8px", border: "1px solid #e5e7eb" }}
+                                        contentStyle={{
+                                            borderRadius: "12px",
+                                            border: "1px solid hsl(var(--border))",
+                                            background: "hsl(var(--background))",
+                                            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                                        }}
                                         formatter={(value: number) => [`${value}%`, "Progress"]}
                                     />
-                                    <Bar dataKey="progress" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                                    <Bar dataKey="progress" fill={CHART_COLORS.primary} radius={[0, 6, 6, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -186,30 +241,43 @@ export function PerformanceContent() {
                 </Card>
 
                 {/* Status Pie Chart */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">Projects by Status</CardTitle>
+                <Card className="rounded-2xl border-border/60">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-semibold flex items-center gap-2">
+                            <Folder className="h-5 w-5 text-primary" />
+                            Projects by Status
+                        </CardTitle>
+                        <CardDescription>Distribution across project statuses</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[300px]">
+                        <div className="h-[280px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
                                         data={statusData}
                                         cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={100}
+                                        cy="45%"
+                                        innerRadius={50}
+                                        outerRadius={85}
                                         paddingAngle={4}
                                         dataKey="value"
-                                        label={({ name, value }) => `${name}: ${value}`}
                                     >
-                                        {statusData.map((_, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        {statusData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.fill} />
                                         ))}
                                     </Pie>
-                                    <Tooltip />
-                                    <Legend />
+                                    <Tooltip
+                                        contentStyle={{
+                                            borderRadius: "12px",
+                                            border: "1px solid hsl(var(--border))",
+                                            background: "hsl(var(--background))",
+                                        }}
+                                    />
+                                    <Legend
+                                        verticalAlign="bottom"
+                                        height={36}
+                                        formatter={(value) => <span className="text-sm text-foreground">{value}</span>}
+                                    />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
@@ -217,21 +285,33 @@ export function PerformanceContent() {
                 </Card>
 
                 {/* Priority Distribution */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">Priority Distribution</CardTitle>
+                <Card className="rounded-2xl border-border/60">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-semibold flex items-center gap-2">
+                            <Target className="h-5 w-5 text-primary" />
+                            Priority Distribution
+                        </CardTitle>
+                        <CardDescription>Projects organized by priority level</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[300px]">
+                        <div className="h-[280px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={priorityData}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="name" />
-                                    <YAxis allowDecimals={false} />
+                                <BarChart data={priorityData} margin={{ top: 10, right: 20, bottom: 20, left: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                                    <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                                    <YAxis allowDecimals={false} tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
                                     <Tooltip
-                                        contentStyle={{ borderRadius: "8px", border: "1px solid #e5e7eb" }}
+                                        contentStyle={{
+                                            borderRadius: "12px",
+                                            border: "1px solid hsl(var(--border))",
+                                            background: "hsl(var(--background))",
+                                        }}
                                     />
-                                    <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                                        {priorityData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                                        ))}
+                                    </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -239,43 +319,54 @@ export function PerformanceContent() {
                 </Card>
 
                 {/* Task Completion */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">Task Overview</CardTitle>
+                <Card className="rounded-2xl border-border/60">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-semibold flex items-center gap-2">
+                            <CheckCircle className="h-5 w-5 text-primary" />
+                            Task Overview
+                        </CardTitle>
+                        <CardDescription>Track task completion across all projects</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
+                        <div className="space-y-6">
                             <div className="flex justify-between items-center">
                                 <span className="text-sm text-muted-foreground">Tasks Completed</span>
-                                <span className="text-2xl font-bold text-green-500">{stats.completedTasks}</span>
-                            </div>
-                            <div className="w-full bg-muted rounded-full h-3">
-                                <div
-                                    className="bg-green-500 h-3 rounded-full transition-all"
-                                    style={{ width: `${stats.taskCompletionRate}%` }}
-                                />
-                            </div>
-                            <div className="flex justify-between text-sm text-muted-foreground">
-                                <span>{stats.completedTasks} completed</span>
-                                <span>{stats.totalTasks - stats.completedTasks} remaining</span>
+                                <span className="text-3xl font-bold text-green-500">{stats.completedTasks}</span>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4 pt-4 border-t">
-                                <div className="text-center">
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Progress</span>
+                                    <span className="font-medium">{stats.taskCompletionRate}%</span>
+                                </div>
+                                <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+                                    <div
+                                        className="bg-gradient-to-r from-green-400 to-green-500 h-3 rounded-full transition-all duration-500"
+                                        style={{ width: `${stats.taskCompletionRate}%` }}
+                                    />
+                                </div>
+                                <div className="flex justify-between text-xs text-muted-foreground">
+                                    <span>{stats.completedTasks} completed</span>
+                                    <span>{stats.totalTasks - stats.completedTasks} remaining</span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border/60">
+                                <div className="text-center p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30">
                                     <div className="text-xl font-bold text-blue-500">
                                         {projects.reduce((acc, p) => acc + p.tasks.filter((t) => t.status === "todo").length, 0)}
                                     </div>
-                                    <div className="text-xs text-muted-foreground">To Do</div>
+                                    <div className="text-xs text-muted-foreground mt-1">To Do</div>
                                 </div>
-                                <div className="text-center">
+                                <div className="text-center p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30">
                                     <div className="text-xl font-bold text-amber-500">
                                         {projects.reduce((acc, p) => acc + p.tasks.filter((t) => t.status === "in-progress").length, 0)}
                                     </div>
-                                    <div className="text-xs text-muted-foreground">In Progress</div>
+                                    <div className="text-xs text-muted-foreground mt-1">In Progress</div>
                                 </div>
-                                <div className="text-center">
+                                <div className="text-center p-3 rounded-xl bg-green-50 dark:bg-green-950/30">
                                     <div className="text-xl font-bold text-green-500">{stats.completedTasks}</div>
-                                    <div className="text-xs text-muted-foreground">Done</div>
+                                    <div className="text-xs text-muted-foreground mt-1">Done</div>
                                 </div>
                             </div>
                         </div>
@@ -290,35 +381,47 @@ function KPICard({
     title,
     value,
     icon,
+    color,
     trend,
-    trendValue,
+    subtitle,
 }: {
     title: string
     value: string | number
     icon: React.ReactNode
+    color: "primary" | "success" | "warning" | "purple"
     trend?: "up" | "down"
-    trendValue?: string
+    subtitle?: string
 }) {
+    const colorClasses = {
+        primary: "bg-blue-50 text-blue-500 dark:bg-blue-950/30",
+        success: "bg-green-50 text-green-500 dark:bg-green-950/30",
+        warning: "bg-amber-50 text-amber-500 dark:bg-amber-950/30",
+        purple: "bg-purple-50 text-purple-500 dark:bg-purple-950/30",
+    }
+
     return (
-        <Card>
-            <CardContent className="pt-4">
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-muted-foreground">{icon}</span>
+        <Card className="rounded-2xl border-border/60 hover:shadow-md transition-shadow">
+            <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                    <div className={cn("p-2.5 rounded-xl", colorClasses[color])}>
+                        {icon}
+                    </div>
                     {trend && (
-                        <span
+                        <div
                             className={cn(
-                                "text-xs flex items-center gap-1",
-                                trend === "up" ? "text-green-500" : "text-red-500"
+                                "flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full",
+                                trend === "up" ? "bg-green-50 text-green-500 dark:bg-green-950/30" : "bg-red-50 text-red-500 dark:bg-red-950/30"
                             )}
                         >
                             {trend === "up" ? <TrendUp className="h-3 w-3" /> : <TrendDown className="h-3 w-3" />}
-                        </span>
+                            {trend === "up" ? "Up" : "Down"}
+                        </div>
                     )}
                 </div>
                 <div className="text-2xl font-bold">{value}</div>
-                <div className="text-xs text-muted-foreground">{title}</div>
-                {trendValue && (
-                    <div className="text-xs text-muted-foreground mt-1">{trendValue}</div>
+                <div className="text-sm text-muted-foreground mt-0.5">{title}</div>
+                {subtitle && (
+                    <div className="text-xs text-muted-foreground mt-1">{subtitle}</div>
                 )}
             </CardContent>
         </Card>
