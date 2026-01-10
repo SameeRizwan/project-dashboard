@@ -5,8 +5,10 @@ import { TaskCard } from "@/components/task-card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
-import { DotsThreeVertical, Plus, Circle, CircleNotch, CheckCircle, PencilSimple } from "@phosphor-icons/react/dist/ssr"
+import { DotsThreeVertical, Plus, Circle, CircleNotch, CheckCircle, PencilSimple, Trash } from "@phosphor-icons/react/dist/ssr"
 import { EditTaskDialog } from "@/components/edit-task-dialog"
+import { projectService } from "@/lib/services/project-service"
+import { toast } from "sonner"
 
 type Task = {
     id: string
@@ -82,8 +84,21 @@ export function TaskBoardView({ tasks, loading = false }: TaskBoardViewProps) {
         setItems((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)))
     }
 
+
+
     const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault()
+    }
+
+    const handleDeleteTask = async (task: Task) => {
+        if (!confirm("Are you sure you want to delete this task?")) return
+        try {
+            await projectService.deleteTask(task.projectId, task.id)
+            toast.success("Task deleted")
+            setItems(prev => prev.filter(t => t.id !== task.id))
+        } catch (error) {
+            toast.error("Failed to delete task")
+        }
     }
 
     const draggableCard = (t: Task) => (
@@ -129,6 +144,14 @@ export function TaskBoardView({ tasks, loading = false }: TaskBoardViewProps) {
                                         Move to {columnStatusLabel(s)}
                                     </button>
                                 ))}
+                                <div className="h-px bg-border my-1" />
+                                <button
+                                    className="w-full rounded-md px-2 py-1 text-left text-sm hover:bg-accent text-red-500 flex items-center gap-2"
+                                    onClick={() => handleDeleteTask(t)}
+                                >
+                                    <Trash className="h-3.5 w-3.5" />
+                                    Delete
+                                </button>
                             </div>
                         </PopoverContent>
                     </Popover>

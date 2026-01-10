@@ -240,5 +240,30 @@ export const projectService = {
             console.error("Error updating task:", error);
             throw error;
         }
+    },
+
+    // Delete a task from a project
+    async deleteTask(projectId: string, taskId: string): Promise<void> {
+        try {
+            const project = await this.getProject(projectId);
+            if (!project) throw new Error("Project not found");
+
+            const updatedTasks = project.tasks.filter(t => t.id !== taskId);
+
+            // Convert back to firestore format for saving
+            const firestoreTasks = updatedTasks.map(t => ({
+                ...t,
+                startDate: Timestamp.fromDate(t.startDate),
+                endDate: Timestamp.fromDate(t.endDate)
+            }));
+
+            const docRef = doc(db, COLLECTION_NAME, projectId);
+            await updateDoc(docRef, {
+                tasks: firestoreTasks
+            });
+        } catch (error) {
+            console.error("Error deleting task:", error);
+            throw error;
+        }
     }
 };

@@ -1,8 +1,10 @@
 "use client"
 
 import type { Project } from "@/lib/data/projects"
+import { projectService } from "@/lib/services/project-service"
+import { toast } from "sonner"
 import { TaskCard } from "@/components/task-card"
-import { Plus, ListChecks, DotsThreeVertical, PencilSimple } from "@phosphor-icons/react/dist/ssr"
+import { Plus, ListChecks, DotsThreeVertical, PencilSimple, Trash } from "@phosphor-icons/react/dist/ssr"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -29,6 +31,20 @@ type TaskCardsViewProps = {
 export function TaskCardsView({ tasks, loading = false }: TaskCardsViewProps) {
     const isEmpty = !loading && tasks.length === 0
     const [editingTask, setEditingTask] = useState<Task | null>(null)
+
+    // We need local state to remove item immediately from view or trigger reload
+    // But since tasks come from props, ideally we call a refresh from parent or refresh page
+    // For simplicity, we'll reload page on delete for now to match edit behavior
+    const handleDeleteTask = async (task: Task) => {
+        if (!confirm("Are you sure you want to delete this task?")) return
+        try {
+            await projectService.deleteTask(task.projectId, task.id)
+            toast.success("Task deleted")
+            window.location.reload()
+        } catch (error) {
+            toast.error("Failed to delete task")
+        }
+    }
 
     return (
         <div className="p-4">
@@ -66,6 +82,14 @@ export function TaskCardsView({ tasks, loading = false }: TaskCardsViewProps) {
                                         >
                                             <PencilSimple className="h-3.5 w-3.5" />
                                             Edit Task
+                                        </button>
+                                        <div className="h-px bg-border my-1" />
+                                        <button
+                                            className="w-full rounded-md px-2 py-1 text-left text-sm hover:bg-accent text-red-500 flex items-center gap-2"
+                                            onClick={() => handleDeleteTask(t)}
+                                        >
+                                            <Trash className="h-3.5 w-3.5" />
+                                            Delete
                                         </button>
                                     </PopoverContent>
                                 </Popover>

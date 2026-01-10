@@ -89,12 +89,6 @@ export function MyTasksContent() {
                     </div>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground hidden sm:flex">
-                        <span>{stats.total} total</span>
-                        <span className="text-blue-500">{stats.todo} to do</span>
-                        <span className="text-amber-500">{stats.inProgress} in progress</span>
-                        <span className="text-green-500">{stats.done} done</span>
-                    </div>
                     <div className="flex items-center gap-2 ml-auto">
                         <Button size="sm" className="gap-2" onClick={() => setCreateOpen(true)}>
                             <Plus className="h-4 w-4" />
