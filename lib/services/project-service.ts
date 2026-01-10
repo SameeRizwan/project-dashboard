@@ -210,5 +210,35 @@ export const projectService = {
             console.error("Error adding task:", error);
             throw error;
         }
+    },
+
+    // Update a task within a project
+    async updateTask(projectId: string, taskId: string, updates: Partial<Project['tasks'][0]>): Promise<void> {
+        try {
+            const project = await this.getProject(projectId);
+            if (!project) throw new Error("Project not found");
+
+            const updatedTasks = project.tasks.map(t => {
+                if (t.id === taskId) {
+                    return { ...t, ...updates };
+                }
+                return t;
+            });
+
+            // Convert back to firestore format for saving
+            const firestoreTasks = updatedTasks.map(t => ({
+                ...t,
+                startDate: Timestamp.fromDate(t.startDate),
+                endDate: Timestamp.fromDate(t.endDate)
+            }));
+
+            const docRef = doc(db, COLLECTION_NAME, projectId);
+            await updateDoc(docRef, {
+                tasks: firestoreTasks
+            });
+        } catch (error) {
+            console.error("Error updating task:", error);
+            throw error;
+        }
     }
 };

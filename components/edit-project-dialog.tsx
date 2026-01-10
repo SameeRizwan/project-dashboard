@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@phosphor-icons/react/dist/ssr"
 import type { Project } from "@/lib/data/projects"
 import { projectService } from "@/lib/services/project-service"
+import { clientService, type Client } from "@/lib/services/client-service"
 import { toast } from "sonner"
 import { format } from "date-fns"
 
@@ -32,8 +33,20 @@ export function EditProjectDialog({ project, open, onOpenChange, onSave }: EditP
     const [status, setStatus] = useState<Project["status"]>("planned")
     const [priority, setPriority] = useState<Project["priority"]>("medium")
     const [client, setClient] = useState("")
+    const [clientId, setClientId] = useState("")
     const [endDate, setEndDate] = useState("")
     const [loading, setLoading] = useState(false)
+    const [clients, setClients] = useState<Client[]>([])
+
+    useEffect(() => {
+        const loadClients = async () => {
+            const list = await clientService.getAllClients()
+            setClients(list)
+        }
+        if (open) {
+            loadClients()
+        }
+    }, [open])
 
     useEffect(() => {
         if (project) {
@@ -43,6 +56,7 @@ export function EditProjectDialog({ project, open, onOpenChange, onSave }: EditP
             setStatus(project.status)
             setPriority(project.priority)
             setClient(project.client || "")
+            setClientId(project.clientId || "")
             setEndDate(project.endDate ? format(project.endDate, "yyyy-MM-dd") : "")
         }
     }, [project])
@@ -58,6 +72,7 @@ export function EditProjectDialog({ project, open, onOpenChange, onSave }: EditP
                 status,
                 priority,
                 client,
+                clientId,
                 endDate: endDate ? new Date(endDate) : project.endDate,
             })
             toast.success("Project updated successfully")
@@ -122,12 +137,24 @@ export function EditProjectDialog({ project, open, onOpenChange, onSave }: EditP
 
                     <div className="grid gap-2">
                         <Label htmlFor="client">Client</Label>
-                        <Input
-                            id="client"
-                            value={client}
-                            onChange={(e) => setClient(e.target.value)}
-                            placeholder="Client name (optional)"
-                        />
+                        <Select
+                            value={clientId}
+                            onValueChange={(val) => {
+                                setClientId(val)
+                                const selected = clients.find(c => c.id === val)
+                                if (selected) setClient(selected.name)
+                            }}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select client" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">None</SelectItem>
+                                {clients.map((c) => (
+                                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div className="grid gap-2">

@@ -10,6 +10,8 @@ import { DEFAULT_VIEW_OPTIONS, type ViewOptions } from "@/lib/view-options"
 import { Spinner, Plus } from "@phosphor-icons/react/dist/ssr"
 import { Button } from "@/components/ui/button"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
+import { isToday, isPast, isFuture } from "date-fns"
+import { Sun } from "@phosphor-icons/react/dist/ssr"
 
 type Task = {
     id: string
@@ -28,6 +30,7 @@ export function MyTasksContent() {
     const [loading, setLoading] = useState(true)
     const [viewOptions, setViewOptions] = useState<ViewOptions>(DEFAULT_VIEW_OPTIONS)
     const [createOpen, setCreateOpen] = useState(false)
+    const [showMyDay, setShowMyDay] = useState(false)
 
     const fetchTasks = async () => {
         setLoading(true)
@@ -60,6 +63,13 @@ export function MyTasksContent() {
         done: tasks.filter((t) => t.status === "done").length,
     }), [tasks])
 
+    const displayedTasks = useMemo(() => {
+        if (showMyDay) {
+            return tasks.filter(t => t.endDate && isToday(new Date(t.endDate)) && t.status !== 'done')
+        }
+        return tasks
+    }, [tasks, showMyDay])
+
     if (loading) {
         return (
             <div className="flex flex-1 items-center justify-center">
@@ -90,6 +100,15 @@ export function MyTasksContent() {
                             <Plus className="h-4 w-4" />
                             Create Task
                         </Button>
+                        <Button
+                            variant={showMyDay ? "default" : "outline"}
+                            size="sm"
+                            className="gap-2"
+                            onClick={() => setShowMyDay(!showMyDay)}
+                        >
+                            <Sun className="h-4 w-4" weight={showMyDay ? "fill" : "regular"} />
+                            My Day
+                        </Button>
                         <ViewOptionsPopover options={viewOptions} onChange={setViewOptions} />
                     </div>
                 </div>
@@ -98,13 +117,13 @@ export function MyTasksContent() {
             {/* Content based on view type from ViewOptionsPopover */}
             {
                 viewOptions.viewType === "list" && (
-                    <TaskCardsView tasks={tasks} loading={loading} />
+                    <TaskCardsView tasks={displayedTasks} loading={loading} />
                 )
             }
 
             {
                 viewOptions.viewType === "board" && (
-                    <TaskBoardView tasks={tasks} loading={loading} />
+                    <TaskBoardView tasks={displayedTasks} loading={loading} />
                 )
             }
 

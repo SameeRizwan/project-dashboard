@@ -2,8 +2,12 @@
 
 import type { Project } from "@/lib/data/projects"
 import { TaskCard } from "@/components/task-card"
-import { Plus, ListChecks } from "@phosphor-icons/react/dist/ssr"
+import { Plus, ListChecks, DotsThreeVertical, PencilSimple } from "@phosphor-icons/react/dist/ssr"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { EditTaskDialog } from "@/components/edit-task-dialog"
 
 type Task = {
     id: string
@@ -24,6 +28,7 @@ type TaskCardsViewProps = {
 
 export function TaskCardsView({ tasks, loading = false }: TaskCardsViewProps) {
     const isEmpty = !loading && tasks.length === 0
+    const [editingTask, setEditingTask] = useState<Task | null>(null)
 
     return (
         <div className="p-4">
@@ -44,9 +49,39 @@ export function TaskCardsView({ tasks, loading = false }: TaskCardsViewProps) {
             ) : (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {tasks.map((t) => (
-                        <TaskCard key={t.id} task={t} />
+                        <TaskCard
+                            key={t.id}
+                            task={t}
+                            actions={
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                            <DotsThreeVertical className="h-4 w-4" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-40 p-2" align="end">
+                                        <button
+                                            className="w-full rounded-md px-2 py-1 text-left text-sm hover:bg-accent flex items-center gap-2"
+                                            onClick={() => setEditingTask(t)}
+                                        >
+                                            <PencilSimple className="h-3.5 w-3.5" />
+                                            Edit Task
+                                        </button>
+                                    </PopoverContent>
+                                </Popover>
+                            }
+                        />
                     ))}
                 </div>
+            )}
+            {editingTask && (
+                <EditTaskDialog
+                    open={!!editingTask}
+                    onOpenChange={(open) => !open && setEditingTask(null)}
+                    task={editingTask as any}
+                    projectId={editingTask.projectId}
+                    onTaskUpdated={() => window.location.reload()}
+                />
             )}
         </div>
     )

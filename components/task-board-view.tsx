@@ -5,7 +5,8 @@ import { TaskCard } from "@/components/task-card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
-import { DotsThreeVertical, Plus, Circle, CircleNotch, CheckCircle } from "@phosphor-icons/react/dist/ssr"
+import { DotsThreeVertical, Plus, Circle, CircleNotch, CheckCircle, PencilSimple } from "@phosphor-icons/react/dist/ssr"
+import { EditTaskDialog } from "@/components/edit-task-dialog"
 
 type Task = {
     id: string
@@ -55,6 +56,7 @@ function columnStatusLabel(status: Task["status"]): string {
 export function TaskBoardView({ tasks, loading = false }: TaskBoardViewProps) {
     const [items, setItems] = useState<Task[]>(tasks)
     const [draggingId, setDraggingId] = useState<string | null>(null)
+    const [editingTask, setEditingTask] = useState<Task | null>(null)
 
     useEffect(() => {
         setItems(tasks)
@@ -89,8 +91,8 @@ export function TaskBoardView({ tasks, loading = false }: TaskBoardViewProps) {
             key={t.id}
             draggable
             className={`transition-all ${draggingId === t.id
-                    ? "cursor-grabbing opacity-70 shadow-lg shadow-lg/20 scale-[0.98]"
-                    : "cursor-grab"
+                ? "cursor-grabbing opacity-70 shadow-lg shadow-lg/20 scale-[0.98]"
+                : "cursor-grab"
                 }`}
             onDragStart={(e) => {
                 e.dataTransfer.setData("text/id", t.id)
@@ -110,6 +112,14 @@ export function TaskBoardView({ tasks, loading = false }: TaskBoardViewProps) {
                         </PopoverTrigger>
                         <PopoverContent className="w-40 p-2" align="end">
                             <div className="space-y-1">
+                                <button
+                                    className="w-full rounded-md px-2 py-1 text-left text-sm hover:bg-accent flex items-center gap-2"
+                                    onClick={() => setEditingTask(t)}
+                                >
+                                    <PencilSimple className="h-3.5 w-3.5" />
+                                    Edit Task
+                                </button>
+                                <div className="h-px bg-border my-1" />
                                 {COLUMN_ORDER.map((s) => (
                                     <button
                                         key={s}
@@ -191,6 +201,19 @@ export function TaskBoardView({ tasks, loading = false }: TaskBoardViewProps) {
                     </div>
                 ))}
             </div>
+            {editingTask && (
+                <EditTaskDialog
+                    open={!!editingTask}
+                    onOpenChange={(open) => !open && setEditingTask(null)}
+                    task={editingTask as any}
+                    projectId={editingTask.projectId}
+                    onTaskUpdated={() => {
+                        // In a real app we'd refetch or update local state
+                        // For now we rely on the parent or refresh
+                        window.location.reload()
+                    }}
+                />
+            )}
         </div>
     )
 }

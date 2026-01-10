@@ -12,6 +12,7 @@ export type Project = {
   members: string[]
   // Optional subtitle fields for card/list view
   client?: string
+  clientId?: string
   typeLabel?: string
   durationLabel?: string
   tasks: Array<{
@@ -21,6 +22,7 @@ export type Project = {
     status: "todo" | "in-progress" | "done"
     startDate: Date
     endDate: Date
+    priority?: "urgent" | "high" | "medium" | "low"
   }>
 }
 
