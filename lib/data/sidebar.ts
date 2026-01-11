@@ -1,4 +1,4 @@
-export type NavItemId = "inbox" | "my-tasks" | "projects" | "clients" | "performance" | "calendar" | "time-tracking" | "reports"
+export type NavItemId = "inbox" | "my-tasks" | "projects" | "clients" | "performance" | "calendar" | "time-tracking" | "reports" | "ideas"
 
 export type SidebarFooterItemId = "settings" | "templates" | "help"
 
@@ -31,6 +31,7 @@ export const navItems: NavItem[] = [
     { id: "time-tracking", label: "Time Tracking", href: "/time-tracking" },
     { id: "performance", label: "Performance", href: "/performance" },
     { id: "reports", label: "Reports", href: "/reports" },
+    { id: "ideas", label: "Ideas", href: "/ideas" },
 ]
 
 export const activeProjects: ActiveProjectSummary[] = [

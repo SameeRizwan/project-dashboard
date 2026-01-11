@@ -35,6 +35,7 @@ import {
   CalendarBlank,
   Timer,
   FileText,
+  Lightbulb,
 } from "@phosphor-icons/react/dist/ssr"
 import { activeProjects, footerItems, navItems, type NavItemId, type SidebarFooterItemId } from "@/lib/data/sidebar"
 import { useAuth } from "@/components/auth-provider"
@@ -48,6 +49,7 @@ const navItemIcons: Record<NavItemId, React.ComponentType<{ className?: string }
   "time-tracking": Timer,
   performance: ChartBar,
   reports: FileText,
+  ideas: Lightbulb,
 }
 
 const footerItemIcons: Record<SidebarFooterItemId, React.ComponentType<{ className?: string }>> = {
