@@ -61,7 +61,7 @@ export function CreateTaskDialog({ open, onOpenChange, onTaskCreated, defaultPro
             setPriority("medium")
             setDueDate(new Date())
         }
-    }, [open, defaultProjectId, projectId])
+    }, [open, defaultProjectId])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
