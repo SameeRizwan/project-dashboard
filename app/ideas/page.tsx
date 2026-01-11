@@ -1,6 +1,10 @@
-
+import { SharedLayout } from "@/components/shared-layout"
 import { IdeasContent } from "@/components/ideas-content"
 
 export default function IdeasPage() {
-    return <IdeasContent />
+    return (
+        <SharedLayout>
+            <IdeasContent />
+        </SharedLayout>
+    )
 }
