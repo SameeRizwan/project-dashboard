@@ -63,6 +63,13 @@ export function CreateTaskDialog({ open, onOpenChange, onTaskCreated, defaultPro
         }
     }, [open, defaultProjectId])
 
+    console.log("CreateTaskDialog render:", { open, projectId, defaultProjectId })
+
+    const handleProjectChange = (val: string) => {
+        console.log("Selected project:", val)
+        setProjectId(val)
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!name || !projectId || !dueDate) {
@@ -118,7 +125,7 @@ export function CreateTaskDialog({ open, onOpenChange, onTaskCreated, defaultPro
                         <Label htmlFor="project" className="text-right">
                             Project
                         </Label>
-                        <Select value={projectId} onValueChange={setProjectId} disabled={projectsLoading}>
+                        <Select value={projectId} onValueChange={handleProjectChange} disabled={projectsLoading}>
                             <SelectTrigger className="col-span-3">
                                 <SelectValue placeholder={projectsLoading ? "Loading..." : "Select project"} />
                             </SelectTrigger>
